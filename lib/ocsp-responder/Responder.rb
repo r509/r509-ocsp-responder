@@ -13,7 +13,7 @@ module OcspResponder::Validity
 
         def check(serial)
             hash = @redis.hgetall("cert:#{serial}")
-            if hash.has_key?("status")
+            if not hash.nil? and hash.has_key?("status")
                 R509::Validity::Status.new(
                     :status => hash["status"].to_i,
                     :revocation_time => hash["revocation_time"].to_i || nil,
@@ -44,27 +44,35 @@ module OcspResponder::Validity
     end
 end
 
-yaml_config = YAML::load(File.read("config.yaml"))
-
-redis = Redis.new
-
-config = R509::Config.new(
-    OpenSSL::X509::Certificate.new(File.read(yaml_config["ca"]["cer_filename"])),
-    OpenSSL::PKey::RSA.new(File.read(yaml_config["ca"]["key_filename"])), 
-    {}
-)
-
-OCSPSIGNER = R509::Ocsp::Signer.new(
-    :configs => [config], 
-    :validity_checker => OcspResponder::Validity::ValidityChecker.new(redis)
-)
-
 module OcspResponder
     class Responder < Sinatra::Base
         configure do
             mime_type :ocsp, 'application/ocsp-response'
             disable :protection #disable Rack::Protection (for speed)
             enable :logging
+            #set :environment, :production
+
+            yaml_config = YAML::load(File.read("config.yaml"))
+
+            redis = Redis.new
+
+            config = R509::Config.new(
+                OpenSSL::X509::Certificate.new(File.read(yaml_config["ca"]["cer_filename"])),
+                OpenSSL::PKey::RSA.new(File.read(yaml_config["ca"]["key_filename"])), 
+                {}
+            )
+
+            OCSPSIGNER = R509::Ocsp::Signer.new(
+                :configs => [config], 
+                :validity_checker => OcspResponder::Validity::ValidityChecker.new(redis)
+            )
+        end
+        error do
+            "Something is amiss with our OCSP responder. You should ... wait?"
+        end
+        get '/favicon.ico' do
+            puts "go away. no children."
+            "go away. no children"
         end
         get '/*' do
             raw_request = params[:splat].join("/")
@@ -74,8 +82,9 @@ module OcspResponder
                 response = OCSPSIGNER.sign_response(statuses)
                 content_type :ocsp
                 response.to_der
-            rescue
-                puts "invalid request"
+            rescue StandardError => e
+                puts "invalid request #{e}"
+                raise e
             end
 
         end
@@ -87,8 +96,9 @@ module OcspResponder
                     response = OCSPSIGNER.sign_response(statuses)
                     content_type :ocsp
                     response.to_der
-                rescue
-                    puts "invalid request"
+                rescue StandardError => e
+                    puts "invalid request #{e}"
+                    raise e
                 end
             end
         end
