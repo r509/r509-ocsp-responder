@@ -1,0 +1,4 @@
+ca: {
+    cer_filename: "/Users/sschulte/code/r509/cert_data/test_ca/test_ca.cer",
+    key_filename: "/Users/sschulte/code/r509/cert_data/test_ca/test_ca.key"
+}
