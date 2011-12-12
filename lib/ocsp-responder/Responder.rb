@@ -2,21 +2,62 @@ require 'rubygems' if RUBY_VERSION < "1.9"
 require 'sinatra/base'
 require 'r509'
 require 'base64'
+require 'redis'
+require 'yaml'
 
-class ValidityChecker < R509::Validity::Checker
-    def check(serial)
-        R509::Validity::Status.new(:status => R509::Validity::VALID)
+module OcspResponder::Validity
+    class ValidityChecker < R509::Validity::Checker
+        def initialize(redis)
+            @redis = redis
+        end
+
+        def check(serial)
+            hash = @redis.hgetall("cert:#{serial}")
+            if hash.has_key?("status")
+                R509::Validity::Status.new(
+                    :status => hash["status"].to_i,
+                    :revocation_time => hash["revocation_time"].to_i || nil,
+                    :revocation_reason => hash["revocation_reason"].to_i || 0
+                )
+            else
+                R509::Validity::Status.new(:status => R509::Validity::UNKNOWN)
+            end
+        end
+    end
+
+    class ValidityWriter < R509::Validity::Writer
+        def initialize(redis)
+            @redis = redis
+        end
+
+        def issue(serial)
+            @redis.hmset("cert:#{serial}", "status", 0)
+        end
+
+        def revoke(serial, reason)
+            @redis.hmset("cert:#{serial}", 
+                "status", 1, 
+                "revocation_time", Time.now.to_i, 
+                "revocation_reason", reason
+            )
+        end
     end
 end
 
-class ValidityWriter < R509::Validity::Writer
-    def write(serial, status)
-    end
-end
+yaml_config = YAML::load(File.read("config.yaml"))
 
-@@config = R509::Config.new(OpenSSL::X509::Certificate.new(File.read("/Users/pkehrer/Code/r509/cert_data/test_ca/test_ca.cer")),OpenSSL::PKey::RSA.new(File.read("/Users/pkehrer/Code/r509/cert_data/test_ca/test_ca.key")), {})
+redis = Redis.new
 
-OCSPSIGNER = R509::Ocsp::Signer.new( :configs => [@@config], :validity_checker => ValidityChecker.new )
+config = R509::Config.new(
+    OpenSSL::X509::Certificate.new(File.read(yaml_config["ca"]["cer_filename"])),
+    OpenSSL::PKey::RSA.new(File.read(yaml_config["ca"]["key_filename"])), 
+    {}
+)
+
+OCSPSIGNER = R509::Ocsp::Signer.new(
+    :configs => [config], 
+    :validity_checker => OcspResponder::Validity::ValidityChecker.new(redis)
+)
 
 module OcspResponder
     class Responder < Sinatra::Base
