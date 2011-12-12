@@ -1,0 +1,4 @@
+ca: {
+    cer_filename: "/some/path/to/ca.cer",
+    key_filename: "/some/path/to/ca_key.pem"
+}

@@ -5,3 +5,4 @@ cert_data/test_ca/crl_number.txt
 coverage
 doc
 *.gem
+config.yaml
