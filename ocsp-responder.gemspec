@@ -10,6 +10,7 @@ spec = Gem::Specification.new do |s|
   s.description = 'An OCSP responder. What, you want more info?'
   s.add_dependency 'r509'
   s.add_dependency 'redis'
+  s.add_dependency 'r509-validity-redis'
   s.add_dependency 'SystemTimer'
   s.add_dependency 'yaml'
   s.add_development_dependency 'rspec'
