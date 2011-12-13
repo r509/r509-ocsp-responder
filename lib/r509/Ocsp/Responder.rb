@@ -7,7 +7,7 @@ require 'redis'
 require 'yaml'
 require 'logger'
 
-module OcspResponder
+module R509::Ocsp
     class Responder < Sinatra::Base
         configure do
             mime_type :ocsp, 'application/ocsp-response'
@@ -28,7 +28,7 @@ module OcspResponder
             )
 
             OCSPSIGNER = R509::Ocsp::Signer.new(
-                :configs => [config], 
+                :configs => [config],
                 :validity_checker => R509ValidityRedis::Checker.new(redis)
             )
         end

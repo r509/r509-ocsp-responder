@@ -1,9 +1,9 @@
 require File.dirname(__FILE__) + '/spec_helper'
 
 
-describe OcspResponder::Responder do
+describe R509::Ocsp::Responder do
     def app
-        @app ||= OcspResponder::Responder
+        @app ||= R509::Ocsp::Responder
     end
 
     it "should return unauthorized on a GET unrelated to the configured CA" do

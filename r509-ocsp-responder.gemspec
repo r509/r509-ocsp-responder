@@ -1,9 +1,9 @@
 $:.push File.expand_path("../lib", __FILE__)
-require "ocsp-responder/version"
+require "r509/Ocsp/Responder/Version"
 
 spec = Gem::Specification.new do |s|
-  s.name = 'ocsp-responder'
-  s.version = OcspResponder::VERSION
+  s.name = 'r509-ocsp-responder'
+  s.version = R509::Ocsp::Responder::VERSION
   s.platform = Gem::Platform::RUBY
   s.has_rdoc = false
   s.summary = "A (relatively) simple OCSP responder written to work with r509"
@@ -11,8 +11,6 @@ spec = Gem::Specification.new do |s|
   s.add_dependency 'r509'
   s.add_dependency 'redis'
   s.add_dependency 'r509-validity-redis'
-  s.add_dependency 'SystemTimer'
-  s.add_dependency 'yaml'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'syntax'
   s.author = "Paul Kehrer"
