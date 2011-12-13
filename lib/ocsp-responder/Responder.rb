@@ -1,48 +1,11 @@
 require 'rubygems' if RUBY_VERSION < "1.9"
 require 'sinatra/base'
 require 'r509'
+require 'r509-validity-redis'
 require 'base64'
 require 'redis'
 require 'yaml'
-
-module OcspResponder::Validity
-    class ValidityChecker < R509::Validity::Checker
-        def initialize(redis)
-            @redis = redis
-        end
-
-        def check(serial)
-            hash = @redis.hgetall("cert:#{serial}")
-            if not hash.nil? and hash.has_key?("status")
-                R509::Validity::Status.new(
-                    :status => hash["status"].to_i,
-                    :revocation_time => hash["revocation_time"].to_i || nil,
-                    :revocation_reason => hash["revocation_reason"].to_i || 0
-                )
-            else
-                R509::Validity::Status.new(:status => R509::Validity::UNKNOWN)
-            end
-        end
-    end
-
-    class ValidityWriter < R509::Validity::Writer
-        def initialize(redis)
-            @redis = redis
-        end
-
-        def issue(serial)
-            @redis.hmset("cert:#{serial}", "status", 0)
-        end
-
-        def revoke(serial, reason)
-            @redis.hmset("cert:#{serial}", 
-                "status", 1, 
-                "revocation_time", Time.now.to_i, 
-                "revocation_reason", reason
-            )
-        end
-    end
-end
+require 'logger'
 
 module OcspResponder
     class Responder < Sinatra::Base
@@ -64,17 +27,28 @@ module OcspResponder
 
             OCSPSIGNER = R509::Ocsp::Signer.new(
                 :configs => [config], 
-                :validity_checker => OcspResponder::Validity::ValidityChecker.new(redis)
+                :validity_checker => R509ValidityRedis::Checker.new(redis)
             )
         end
+
+        configure :production do
+            LOG = Logger.new(STDOUT)
+        end
+
+        configure :development do
+            LOG = Logger.new(STDOUT)
+        end
+
         error do
             "Something is amiss with our OCSP responder. You should ... wait?"
         end
+
         get '/favicon.ico' do
-            puts "go away. no children."
+            LOG.debug "go away. no children."
             "go away. no children"
         end
         get '/*' do
+            LOG.info "Got a GET request"
             raw_request = params[:splat].join("/")
             der = Base64.decode64(raw_request)
             begin
@@ -83,7 +57,7 @@ module OcspResponder
                 content_type :ocsp
                 response.to_der
             rescue StandardError => e
-                puts "invalid request #{e}"
+                LOG.error "invalid request #{e}"
                 raise e
             end
 
@@ -97,7 +71,7 @@ module OcspResponder
                     content_type :ocsp
                     response.to_der
                 rescue StandardError => e
-                    puts "invalid request #{e}"
+                    LOG.error "invalid request #{e}"
                     raise e
                 end
             end
