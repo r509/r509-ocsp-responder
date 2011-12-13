@@ -13,16 +13,16 @@
     limitations under the License.
 
 
-#ocsp-responder
-ocsp-responder is an OCSP responder written using r509 and Sinatra to conform to RFC 2560 (as well as RFC 5019 if we've got the time)
+#r509-ocsp-responder
+r509-ocsp-responder is an OCSP responder written using r509 and Sinatra to conform to RFC 2560 (as well as RFC 5019 if we've got the time)
 
 ##Requirements/Installation
 
-You need r509 and Sinatra.
+You need r509 and sinatra. For development/tests you need rack-test and rspec.
 
 ##Basic Usage
 
 TODO
 
 ##Running Tests
-...TODO
+```rake spec```

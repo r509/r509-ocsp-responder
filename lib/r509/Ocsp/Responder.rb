@@ -41,6 +41,10 @@ module R509::Ocsp
             LOG = Logger.new(STDOUT)
         end
 
+        configure :test do
+            LOG = Logger.new(nil)
+        end
+
         error do
             "Something is amiss with our OCSP responder. You should ... wait?"
         end

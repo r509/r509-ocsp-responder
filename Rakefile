@@ -3,7 +3,9 @@ require 'rspec/core/rake_task'
 require "#{File.dirname(__FILE__)}/lib/r509/Ocsp/Responder/Version"
 
 task :default => :spec
-RSpec::Core::RakeTask.new(:spec)
+RSpec::Core::RakeTask.new(:spec) do
+    ENV['RACK_ENV'] = 'test'
+end
 
 desc 'Run all rspec tests with rcov (1.8 only)'
 RSpec::Core::RakeTask.new(:rcov) do |t|
