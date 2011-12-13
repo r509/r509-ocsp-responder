@@ -13,6 +13,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency 'r509-validity-redis'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'syntax'
+  s.add_development_dependency 'rack-test'
   s.author = "Paul Kehrer"
   s.email = "paul.l.kehrer@gmail.com"
   s.homepage = "http://langui.sh"

@@ -1,7 +1,7 @@
 require 'rubygems' if RUBY_VERSION < "1.9"
 require 'sinatra/base'
 require 'r509'
-require 'r509-validity-redis'
+require 'r509/Validity/Redis'
 require 'base64'
 require 'redis'
 require 'yaml'
@@ -29,7 +29,7 @@ module R509::Ocsp
 
             OCSPSIGNER = R509::Ocsp::Signer.new(
                 :configs => [config],
-                :validity_checker => R509ValidityRedis::Checker.new(redis)
+                :validity_checker => R509::Validity::Redis::Checker.new(redis)
             )
         end
 
