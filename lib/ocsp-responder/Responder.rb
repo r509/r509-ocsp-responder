@@ -35,9 +35,9 @@ module OcspResponder::Validity
         end
 
         def revoke(serial, reason)
-            @redis.hmset("cert:#{serial}", 
-                "status", 1, 
-                "revocation_time", Time.now.to_i, 
+            @redis.hmset("cert:#{serial}",
+                "status", 1,
+                "revocation_time", Time.now.to_i,
                 "revocation_reason", reason
             )
         end
@@ -57,13 +57,15 @@ module OcspResponder
             redis = Redis.new
 
             config = R509::Config.new(
-                OpenSSL::X509::Certificate.new(File.read(yaml_config["ca"]["cer_filename"])),
-                OpenSSL::PKey::RSA.new(File.read(yaml_config["ca"]["key_filename"])), 
-                {}
+                :ca_cert =>
+                    R509::Cert.new(
+                        :cert => File.read(yaml_config["ca"]["cer_filename"]),
+                        :key => File.read(yaml_config["ca"]["key_filename"])
+                    )
             )
 
             OCSPSIGNER = R509::Ocsp::Signer.new(
-                :configs => [config], 
+                :configs => [config],
                 :validity_checker => OcspResponder::Validity::ValidityChecker.new(redis)
             )
         end
