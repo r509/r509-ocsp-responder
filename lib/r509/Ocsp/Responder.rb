@@ -19,7 +19,7 @@ module R509::Ocsp
 
             redis = Redis.new
 
-            config = R509::Config.new(
+            config = R509::Config::CaConfig.new(
                 :ca_cert =>
                     R509::Cert.new(
                         :cert => File.read(yaml_config["ca"]["cer_filename"]),
