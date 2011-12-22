@@ -15,20 +15,12 @@ module R509::Ocsp
             enable :logging
             #set :environment, :production
 
-            yaml_config = YAML::load(File.read("config.yaml"))
-
             redis = Redis.new
 
-            config = R509::Config::CaConfig.new(
-                :ca_cert =>
-                    R509::Cert.new(
-                        :cert => File.read(yaml_config["ca"]["cer_filename"]),
-                        :key => File.read(yaml_config["ca"]["key_filename"])
-                    )
-            )
+            config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
 
             OCSPSIGNER = R509::Ocsp::Signer.new(
-                :configs => [config],
+                :configs => config_pool.all,
                 :validity_checker => R509::Validity::Redis::Checker.new(redis)
             )
         end
