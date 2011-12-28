@@ -51,7 +51,13 @@ module R509::Ocsp
         end
 
         error do
+            log.error env["sinatra.error"].inspect
+            log.error env["sinatra.error"].backtrace.join("\n")
             "Something is amiss with our OCSP responder. You should ... wait?"
+        end
+
+        error OpenSSL::OCSP::OCSPError do
+            "Invalid request"
         end
 
         error R509::Ocsp::Responder::StatusError do
@@ -77,7 +83,11 @@ module R509::Ocsp
             der = Base64.decode64(raw_request)
             begin
                 statuses = ocsp_signer.check_request(der)
-                log.info "GET Request For Serial(s): #{statuses[:statuses].map { |status| status[:certid].serial }.join(",")}"
+                log.info "GET Request For Serial(s): #{statuses[:statuses].map { |status|
+                    line = status[:certid].serial.to_s
+                    line += "(Unknown CA)" if status[:config].nil?
+                    line
+                }.join(",")}"
                 response = ocsp_signer.sign_response(statuses)
                 content_type :ocsp
                 response.to_der
@@ -93,7 +103,11 @@ module R509::Ocsp
                 der = request.env["rack.input"].read
                 begin
                     statuses = ocsp_signer.check_request(der)
-                    log.info "POST Request For Serial(s): #{statuses[:statuses].map { |status| status[:certid].serial }.join(",")}"
+                    log.info "POST Request For Serial(s): #{statuses[:statuses].map { |status|
+                        line = status[:certid].serial.to_s
+                        line += "(Unknown CA)" if status[:config].nil?
+                        line
+                    }.join(",")}"
                     response = ocsp_signer.sign_response(statuses)
                     content_type :ocsp
                     response.to_der

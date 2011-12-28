@@ -2,8 +2,12 @@ require File.dirname(__FILE__) + '/spec_helper'
 
 
 describe R509::Ocsp::Responder do
+    before :each do
+        @redis = double("redis")
+    end
     def app
         @app ||= R509::Ocsp::Responder
+        @app.send(:set, :redis, @redis)
     end
 
     before :all do
@@ -163,5 +167,26 @@ describe R509::Ocsp::Responder do
         ocsp_response.basic.status[0][0].serial.should == 773553085290984246110251380739025914079776985795
         ocsp_response.verify(@test_ca_cert).should == false
         ocsp_response.verify(@second_ca_cert).should == true
+    end
+    it "should return 200 OK when querying status and redis is available" do
+        @redis.should_receive(:ping).and_return("PONG")
+        get '/status'
+        last_response.should be_ok
+    end
+    it "should return 500 DOWN when querying status with redis unavailable" do
+        @redis.should_receive(:ping).and_raise(StandardError)
+        get '/status'
+        last_response.should_not be_ok
+        last_response.body.should == "Down"
+    end
+    it "check_request should raise error on GET" do
+        get '/Msdfsfsdf'
+        last_response.should_not be_ok
+        last_response.body.should == "Invalid request"
+    end
+    it "check_request should raise error on POST" do
+        post '/', 'Mdskfsdf', "CONTENT_TYPE" => "application/ocsp-request"
+        last_response.should_not be_ok
+        last_response.body.should == "Invalid request"
     end
 end
