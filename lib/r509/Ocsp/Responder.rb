@@ -81,9 +81,22 @@ module R509::Ocsp
         get '/*' do
             raw_request = params[:splat].join("/")
             der = Base64.decode64(raw_request)
+            handle_ocsp_request(der, "GET")
+        end
+
+        post '/' do
+            if request.media_type == 'application/ocsp-request'
+                der = request.env["rack.input"].read
+                handle_ocsp_request(der, "POST")
+            end
+        end
+
+        private
+
+        def handle_ocsp_request(der, method="?")
             begin
                 statuses = ocsp_signer.check_request(der)
-                log.info "GET Request For Serial(s): #{statuses[:statuses].map { |status|
+                log.info "#{method} Request For Serial(s): #{statuses[:statuses].map { |status|
                     line = status[:certid].serial.to_s
                     line += "(Unknown CA)" if status[:config].nil?
                     line
@@ -94,27 +107,6 @@ module R509::Ocsp
             rescue StandardError => e
                 log.error "invalid request #{e}"
                 raise e
-            end
-
-        end
-
-        post '/' do
-            if request.media_type == 'application/ocsp-request'
-                der = request.env["rack.input"].read
-                begin
-                    statuses = ocsp_signer.check_request(der)
-                    log.info "POST Request For Serial(s): #{statuses[:statuses].map { |status|
-                        line = status[:certid].serial.to_s
-                        line += "(Unknown CA)" if status[:config].nil?
-                        line
-                    }.join(",")}"
-                    response = ocsp_signer.sign_response(statuses)
-                    content_type :ocsp
-                    response.to_der
-                rescue StandardError => e
-                    log.error "invalid request #{e}"
-                    raise e
-                end
             end
         end
 
