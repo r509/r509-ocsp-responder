@@ -9,71 +9,101 @@ require 'logger'
 
 module R509::Ocsp
     class Responder < Sinatra::Base
+        #error for status checking
+        class StatusError < StandardError
+        end
+
         configure do
             mime_type :ocsp, 'application/ocsp-response'
             disable :protection #disable Rack::Protection (for speed)
-            enable :logging
-            #set :environment, :production
+            disable :logging
+            set :environment, :production
 
-            redis = Redis.new
+            set :redis, Redis.new
 
             config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
 
-            OCSPSIGNER = R509::Ocsp::Signer.new(
+            set :ocsp_signer, R509::Ocsp::Signer.new(
                 :configs => config_pool.all,
-                :validity_checker => R509::Validity::Redis::Checker.new(redis)
+                :validity_checker => R509::Validity::Redis::Checker.new(settings.redis)
             )
         end
 
         configure :production do
-            LOG = Logger.new(STDOUT)
+            set :log, Logger.new(nil)
         end
 
         configure :development do
-            LOG = Logger.new(STDOUT)
+            set :log, Logger.new(nil)
         end
 
         configure :test do
-            LOG = Logger.new(nil)
+            set :log, Logger.new(nil)
+        end
+
+        helpers do
+            def log
+                settings.log
+            end
+            def ocsp_signer
+                settings.ocsp_signer
+            end
         end
 
         error do
             "Something is amiss with our OCSP responder. You should ... wait?"
         end
 
+        error R509::Ocsp::Responder::StatusError do
+            "Down"
+        end
+
         get '/favicon.ico' do
-            LOG.debug "go away. no children."
+            log.debug "go away. no children."
             "go away. no children"
         end
+
+        get '/status/?' do
+            begin
+                settings.redis.ping
+                "OK"
+            rescue
+                raise R509::Ocsp::Responder::StatusError
+            end
+        end
+
         get '/*' do
-            LOG.info "Got a GET request"
             raw_request = params[:splat].join("/")
             der = Base64.decode64(raw_request)
             begin
-                statuses = OCSPSIGNER.check_request(der)
-                response = OCSPSIGNER.sign_response(statuses)
+                statuses = ocsp_signer.check_request(der)
+                log.info "GET Request For Serial(s): #{statuses[:statuses].map { |status| status[:certid].serial }.join(",")}"
+                response = ocsp_signer.sign_response(statuses)
                 content_type :ocsp
                 response.to_der
             rescue StandardError => e
-                LOG.error "invalid request #{e}"
+                log.error "invalid request #{e}"
                 raise e
             end
 
         end
+
         post '/' do
             if request.media_type == 'application/ocsp-request'
                 der = request.env["rack.input"].read
                 begin
-                    statuses = OCSPSIGNER.check_request(der)
-                    response = OCSPSIGNER.sign_response(statuses)
+                    statuses = ocsp_signer.check_request(der)
+                    log.info "POST Request For Serial(s): #{statuses[:statuses].map { |status| status[:certid].serial }.join(",")}"
+                    response = ocsp_signer.sign_response(statuses)
                     content_type :ocsp
                     response.to_der
                 rescue StandardError => e
-                    LOG.error "invalid request #{e}"
+                    log.error "invalid request #{e}"
                     raise e
                 end
             end
         end
+
     end
 end
 #http://127.0.0.1/MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D
