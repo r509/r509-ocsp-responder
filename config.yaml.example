@@ -4,5 +4,11 @@ certificate_authorities: {
             cert: "/some/path/to/ca.cer",
             key: "/some/path/to/ca_key.pem"
         }
+    },
+    second_ca: {
+        ca_cert: {
+            cert: "/Users/sschulte/code/r509/spec/fixtures/second_ca.cer",
+            key: "/Users/sschulte/code/r509/spec/fixtures/second_ca.key"
+        }
     }
 }
