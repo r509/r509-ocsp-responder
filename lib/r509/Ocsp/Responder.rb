@@ -93,24 +93,36 @@ module R509::Ocsp
 
         private
 
-        def handle_ocsp_request(der, method="?")
+        def handle_ocsp_request(der, method)
             begin
-                statuses = ocsp_signer.check_request(der)
-                log.info "#{method} Request For Serial(s): #{statuses[:statuses].map { |status|
-                    line = status[:certid].serial.to_s
-                    line += "(Unknown CA)" if status[:config].nil?
-                    line
-                }.join(",")}"
-                response = ocsp_signer.sign_response(statuses)
+                response = ocsp_signer.handle_request(der)
+
+                log_response(response,method)
+
                 content_type :ocsp
                 response.to_der
             rescue StandardError => e
-                log.error "invalid request #{e}"
+                log.error "unexpected error #{e}"
                 raise e
+            end
+        end
+
+        def log_response(response, method="?")
+            if response.nil?
+                log.error "Something went horribly wrong"
+                return
+            end
+
+            case response.status
+            when OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+                serials = response.basic.status.map { |status| status[0].serial.to_s }.join(",")
+                log.info "#{method} Request For Serial(s): #{serials}"
+            when OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
+                log.info "#{method} Request For Unauthorized CA"
+            when OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
+                log.info "#{method} Malformed Request"
             end
         end
 
     end
 end
-#http://127.0.0.1/MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D
-
