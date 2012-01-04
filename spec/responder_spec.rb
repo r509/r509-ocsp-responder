@@ -17,7 +17,7 @@ describe R509::Ocsp::Responder do
 
     it "should return unauthorized on a GET which does not match any configured CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 raise StandardError.new("Shouldn't ever call the Checker here, since the request isn't from the configured CA")
             end
         end
@@ -29,7 +29,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (UNKNOWN) response on a GET request from the test_ca CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::UNKNOWN)
             end
         end
@@ -44,7 +44,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (REVOKED) response on a GET request from the test_ca CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::REVOKED, :revocation_time => 123, :revocation_reason => 1)
             end
         end
@@ -59,7 +59,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (VALID) response on a GET request from the test_ca CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
             end
         end
@@ -74,7 +74,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (VALID) response on a GET request from a second configured CA (second_ca)" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
             end
         end
@@ -90,7 +90,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return unauthorized on a POST which does not match any configured CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 raise StandardError.new("Shouldn't ever call the Checker here, since the request isn't from the configured CA")
             end
         end
@@ -103,7 +103,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (UNKNOWN) response on a POST request from the test_ca CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::UNKNOWN)
             end
         end
@@ -119,7 +119,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (REVOKED) response on a POST request from the test_ca CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::REVOKED, :revocation_time => 123, :revocation_reason => 1)
             end
         end
@@ -135,7 +135,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (VALID) response on a POST request from the test_ca CA" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
             end
         end
@@ -151,7 +151,7 @@ describe R509::Ocsp::Responder do
     end
     it "should return a valid (VALID) response on a POST request from a second configured CA (second_ca)" do
         class R509::Validity::Redis::Checker
-            def check(serial)
+            def check(issuer_fingerprint, serial)
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
             end
         end
