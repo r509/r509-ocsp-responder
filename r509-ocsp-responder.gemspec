@@ -11,6 +11,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency 'r509'
   s.add_dependency 'redis'
   s.add_dependency 'r509-validity-redis'
+  s.add_dependency 'sinatra'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'syntax'
   s.add_development_dependency 'rack-test'
