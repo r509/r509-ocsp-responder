@@ -8,6 +8,7 @@ describe R509::Ocsp::Responder do
     def app
         @app ||= R509::Ocsp::Responder
         @app.send(:set, :redis, @redis)
+        #@app.send(:set, :log, Logger.new(STDOUT))
     end
 
     before :all do
@@ -64,6 +65,21 @@ describe R509::Ocsp::Responder do
             end
         end
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+        ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
+        ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
+        ocsp_response.verify(@test_ca_cert).should == true
+        last_response.content_type.should == "application/ocsp-response"
+        last_response.should be_ok
+    end
+    it "should return a valid (VALID) response on a GET request with extra leading slashes from the test_ca CA" do
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+        get '/%2F%2FMFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
         ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD

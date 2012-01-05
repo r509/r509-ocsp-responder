@@ -80,6 +80,9 @@ module R509::Ocsp
 
         get '/*' do
             raw_request = params[:splat].join("/")
+            #remove any leading slashes (looking at you MS Crypto API)
+            raw_request.sub!(/^\/+/,"")
+            log.info "GET Request: "+raw_request
             der = Base64.decode64(raw_request)
             handle_ocsp_request(der, "GET")
         end
@@ -87,6 +90,7 @@ module R509::Ocsp
         post '/' do
             if request.media_type == 'application/ocsp-request'
                 der = request.env["rack.input"].read
+                log.info "POST Request: "+Base64.encode64(der).gsub!(/\n/,"")
                 handle_ocsp_request(der, "POST")
             end
         end
