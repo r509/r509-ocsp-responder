@@ -119,13 +119,25 @@ module R509::Ocsp
 
             case response.status
             when OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
-                serials = response.basic.status.map { |status| status[0].serial.to_s }.join(",")
-                log.info "#{method} Request For Serial(s): #{serials}"
+                serial_data = response.basic.status.map do |status|
+                    friendly_status = case status[1]
+                    when 0
+                        "VALID"
+                    when 1
+                        "REVOKED"
+                    when 2
+                        "UNKNOWN"
+                    end
+                    status[0].serial.to_s+" Status: #{friendly_status}"
+                end
+                log.info "#{method} Request For Serial(s): #{serial_data.join(",")}"
             when OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
                 log.info "#{method} Request For Unauthorized CA"
             when OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
                 log.info "#{method} Malformed Request"
             end
+
+            log.info "User Agent: #{env["HTTP_USER_AGENT"]}"
         end
 
     end
