@@ -21,11 +21,14 @@ module R509::Ocsp
 
             set :redis, Redis.new
 
-            config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
+            config_data = File.read("config.yaml")
+            config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", config_data)
+            set :copy_nonce, YAML.load(config_data)["copy_nonce"] || false
 
             set :ocsp_signer, R509::Ocsp::Signer.new(
                 :configs => config_pool.all,
-                :validity_checker => R509::Validity::Redis::Checker.new(settings.redis)
+                :validity_checker => R509::Validity::Redis::Checker.new(settings.redis),
+                :copy_nonce => settings.copy_nonce
             )
         end
 

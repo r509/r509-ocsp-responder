@@ -1,3 +1,4 @@
+copy_nonce: true
 certificate_authorities: {
     test_ca: {
         ca_cert: {

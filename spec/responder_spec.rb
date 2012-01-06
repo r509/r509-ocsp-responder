@@ -4,10 +4,12 @@ require File.dirname(__FILE__) + '/spec_helper'
 describe R509::Ocsp::Responder do
     before :each do
         @redis = double("redis")
+        @copy_nonce = double("copy_nonce")
     end
     def app
         @app ||= R509::Ocsp::Responder
         @app.send(:set, :redis, @redis)
+        @app.send(:set, :copy_nonce, @copy_nonce)
         #@app.send(:set, :log, Logger.new(STDOUT))
     end
 
@@ -206,5 +208,28 @@ describe R509::Ocsp::Responder do
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
+    end
+    it "copies nonce when copy_nonce is true" do
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+        get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
+        request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::PRESENT_AND_EQUAL
+
+    end
+    it "doesn't copy nonce when copy_nonce is false" do
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+        get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
+        request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::REQUEST_ONLY
     end
 end
