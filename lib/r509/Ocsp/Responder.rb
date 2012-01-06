@@ -130,14 +130,12 @@ module R509::Ocsp
                     end
                     status[0].serial.to_s+" Status: #{friendly_status}"
                 end
-                log.info "#{method} Request For Serial(s): #{serial_data.join(",")}"
+                log.info "#{method} Request For Serial(s): #{serial_data.join(",")} UserAgent: #{env["HTTP_USER_AGENT"]}"
             when OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
-                log.info "#{method} Request For Unauthorized CA"
+                log.info "#{method} Request For Unauthorized CA. UserAgent: #{env["HTTP_USER_AGENT"]}"
             when OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
-                log.info "#{method} Malformed Request"
+                log.info "#{method} Malformed Request. UserAgent: #{env["HTTP_USER_AGENT"]}"
             end
-
-            log.info "User Agent: #{env["HTTP_USER_AGENT"]}"
         end
 
     end
