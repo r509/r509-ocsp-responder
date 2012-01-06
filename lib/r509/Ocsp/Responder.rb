@@ -3,12 +3,13 @@ require 'sinatra/base'
 require 'r509'
 require 'r509/Validity/Redis'
 require 'base64'
-require 'redis'
-require 'yaml'
+require 'dependo'
 require 'logger'
 
 module R509::Ocsp
     class Responder < Sinatra::Base
+        include Dependo::Mixin
+
         #error for status checking
         class StatusError < StandardError
         end
@@ -18,39 +19,6 @@ module R509::Ocsp
             disable :protection #disable Rack::Protection (for speed)
             disable :logging
             set :environment, :production
-
-            set :redis, Redis.new
-
-            config_data = File.read("config.yaml")
-            config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", config_data)
-            set :copy_nonce, YAML.load(config_data)["copy_nonce"] || false
-
-            set :ocsp_signer, R509::Ocsp::Signer.new(
-                :configs => config_pool.all,
-                :validity_checker => R509::Validity::Redis::Checker.new(settings.redis),
-                :copy_nonce => settings.copy_nonce
-            )
-        end
-
-        configure :production do
-            set :log, Logger.new(nil)
-        end
-
-        configure :development do
-            set :log, Logger.new(nil)
-        end
-
-        configure :test do
-            set :log, Logger.new(nil)
-        end
-
-        helpers do
-            def log
-                settings.log
-            end
-            def ocsp_signer
-                settings.ocsp_signer
-            end
         end
 
         error do
@@ -74,7 +42,7 @@ module R509::Ocsp
 
         get '/status/?' do
             begin
-                settings.redis.ping
+                redis.ping
                 "OK"
             rescue
                 raise R509::Ocsp::Responder::StatusError

@@ -3,14 +3,28 @@ require File.dirname(__FILE__) + '/spec_helper'
 
 describe R509::Ocsp::Responder do
     before :each do
+        # clear the dependo before each test
+        Dependo::Registry.clear
+        Dependo::Registry[:log] = Logger.new(nil)
+
+        # we always want to mock with a new redis
         @redis = double("redis")
-        @copy_nonce = double("copy_nonce")
+        Dependo::Registry[:redis] = @redis
+
+        # default value for :copy_nonce is false (can override on a per-test basis)
+        Dependo::Registry[:copy_nonce] = false
+
+        # read the config.yaml
+        Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
     end
     def app
+        # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
+        Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
+            :configs => Dependo::Registry[:config_pool].all,
+            :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
+            :copy_nonce => Dependo::Registry[:copy_nonce]
+        )
         @app ||= R509::Ocsp::Responder
-        @app.send(:set, :redis, @redis)
-        @app.send(:set, :copy_nonce, @copy_nonce)
-        #@app.send(:set, :log, Logger.new(STDOUT))
     end
 
     before :all do
@@ -215,6 +229,10 @@ describe R509::Ocsp::Responder do
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
             end
         end
+
+        # set to true for this test (this works because the app doesn't get set up until after this code)
+        Dependo::Registry[:copy_nonce] = true
+
         get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
         request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -227,6 +245,10 @@ describe R509::Ocsp::Responder do
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
             end
         end
+
+        # set to false for this test (this works because the app doesn't get set up until after this code)
+        Dependo::Registry[:copy_nonce] = false
+
         get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
         request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
