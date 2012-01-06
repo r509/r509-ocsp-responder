@@ -13,20 +13,22 @@ RSpec::Core::RakeTask.new(:rcov) do |t|
     t.rcov = true
 end
 
-desc 'Build the gem'
-task :gem_build do
-    puts `yard`
-    puts `gem build r509-ocsp-responder.gemspec`
-end
+namespace :gem do
+    desc 'Build the gem'
+    task :build do
+        puts `yard`
+        puts `gem build r509-ocsp-responder.gemspec`
+    end
 
-desc 'Install gem'
-task :gem_install do
-    puts `gem install r509-ocsp-responder-#{R509::Ocsp::Responder::VERSION}.gem`
-end
+    desc 'Install gem'
+    task :install do
+        puts `gem install r509-ocsp-responder-#{R509::Ocsp::Responder::VERSION}.gem`
+    end
 
-desc 'Uninstall gem'
-task :gem_uninstall do
-    puts `gem uninstall r509-ocsp-responder`
+    desc 'Uninstall gem'
+    task :uninstall do
+        puts `gem uninstall r509-ocsp-responder`
+    end
 end
 
 desc 'Build yard documentation'
