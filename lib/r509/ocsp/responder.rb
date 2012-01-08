@@ -5,6 +5,7 @@ require 'r509/validity/redis'
 require 'base64'
 require 'dependo'
 require 'logger'
+require 'time'
 
 module R509::Ocsp
     class Responder < Sinatra::Base
@@ -55,14 +56,17 @@ module R509::Ocsp
             raw_request.sub!(/^\/+/,"")
             log.info "GET Request: "+raw_request
             der = Base64.decode64(raw_request)
-            handle_ocsp_request(der, "GET")
+            ocsp_response = handle_ocsp_request(der, "GET")
+            build_headers(ocsp_response)
+            ocsp_response.to_der
         end
 
         post '/' do
             if request.media_type == 'application/ocsp-request'
                 der = request.env["rack.input"].read
                 log.info "POST Request: "+Base64.encode64(der).gsub!(/\n/,"")
-                handle_ocsp_request(der, "POST")
+                ocsp_response = handle_ocsp_request(der, "POST")
+                ocsp_response.to_der
             end
         end
 
@@ -70,27 +74,27 @@ module R509::Ocsp
 
         def handle_ocsp_request(der, method)
             begin
-                response = ocsp_signer.handle_request(der)
+                ocsp_response = ocsp_signer.handle_request(der)
 
-                log_response(response,method)
+                log_ocsp_response(ocsp_response,method)
 
                 content_type :ocsp
-                response.to_der
+                ocsp_response
             rescue StandardError => e
                 log.error "unexpected error #{e}"
                 raise e
             end
         end
 
-        def log_response(response, method="?")
+        def log_ocsp_response(ocsp_response, method="?")
             if response.nil?
                 log.error "Something went horribly wrong"
                 return
             end
 
-            case response.status
+            case ocsp_response.status
             when OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
-                serial_data = response.basic.status.map do |status|
+                serial_data = ocsp_response.basic.status.map do |status|
                     friendly_status = case status[1]
                     when 0
                         "VALID"
@@ -106,6 +110,18 @@ module R509::Ocsp
                 log.info "#{method} Request For Unauthorized CA. UserAgent: #{env["HTTP_USER_AGENT"]}"
             when OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
                 log.info "#{method} Malformed Request. UserAgent: #{env["HTTP_USER_AGENT"]}"
+            end
+        end
+
+        def build_headers(ocsp_response)
+            #cache_headers is injected via config.ru
+            if cache_headers and not ocsp_response.basic.nil?
+                max_age = (ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4]) - 3600
+                response["Last-Modified"] = ocsp_response.basic.status[0][4].httpdate
+                response["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der)
+                response["Expires"] = ocsp_response.basic.status[0][5].httpdate
+                response["Cache-Control"] = "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
+                response["Date"] = Time.now.httpdate
             end
         end
 

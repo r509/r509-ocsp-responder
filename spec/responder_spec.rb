@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/spec_helper'
+require 'time'
 
 
 describe R509::Ocsp::Responder do
@@ -13,6 +14,9 @@ describe R509::Ocsp::Responder do
 
         # default value for :copy_nonce is false (can override on a per-test basis)
         Dependo::Registry[:copy_nonce] = false
+
+        # default value for :cache_headers is false (can override on a per-test basis)
+        Dependo::Registry[:cache_headers] = false
 
         # read the config.yaml
         Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
@@ -253,5 +257,68 @@ describe R509::Ocsp::Responder do
         request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::REQUEST_ONLY
+    end
+    it "returns caching headers for GET when http_cache_headers is true" do
+        Dependo::Registry[:cache_headers] = true
+
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+
+        get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        max_age = (ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4]) - 3600
+        last_response.headers.size.should == 7
+        last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
+        last_response.headers["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der)
+        last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
+        last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
+        last_response.headers["Date"].should_not be_nil
+    end
+    it "returns no caching headers for GET when http_cache_headers is false" do
+        Dependo::Registry[:cache_headers] = false
+
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+
+        get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
+        last_response.content_type.should == "application/ocsp-response"
+        last_response.headers.size.should == 2
+        last_response.should be_ok
+    end
+    it "returns no caching headers for POST when http_cache_headers is true" do
+        Dependo::Registry[:cache_headers] = true
+
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+        der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+        post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.content_type.should == "application/ocsp-response"
+        last_response.headers.size.should == 2
+        last_response.should be_ok
+    end
+    it "returns no caching headers for POST when http_cache_headers is false" do
+        Dependo::Registry[:cache_headers] = false
+
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+        der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+        post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.content_type.should == "application/ocsp-response"
+        last_response.headers.size.should == 2
+        last_response.should be_ok
     end
 end
