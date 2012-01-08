@@ -51,6 +51,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (UNKNOWN) response on a GET request from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -66,6 +67,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (REVOKED) response on a GET request from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -81,6 +83,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (VALID) response on a GET request from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -96,6 +99,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (VALID) response on a GET request with extra leading slashes from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -111,6 +115,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (VALID) response on a GET request from a second configured CA (second_ca)" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -127,6 +132,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return unauthorized on a POST which does not match any configured CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -140,6 +146,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (UNKNOWN) response on a POST request from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -156,6 +163,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (REVOKED) response on a POST request from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -172,6 +180,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (VALID) response on a POST request from the test_ca CA" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -188,6 +197,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return a valid (VALID) response on a POST request from a second configured CA (second_ca)" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -205,17 +215,20 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "should return 200 OK when querying status and redis is available" do
         @redis.should_receive(:ping).and_return("PONG")
         get '/status'
         last_response.should be_ok
     end
+
     it "should return 500 DOWN when querying status with redis unavailable" do
         @redis.should_receive(:ping).and_raise(StandardError)
         get '/status'
         last_response.should_not be_ok
         last_response.body.should == "Down"
     end
+
     it "a malformed request should return a proper OCSP response (GET)" do
         get '/Msdfsfsdf'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -223,6 +236,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "a malformed request should return a proper OCSP response (POST)" do
         post '/', 'Mdskfsdf', "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -230,6 +244,7 @@ describe R509::Ocsp::Responder do
         last_response.content_type.should == "application/ocsp-response"
         last_response.should be_ok
     end
+
     it "copies nonce when copy_nonce is true" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -246,6 +261,7 @@ describe R509::Ocsp::Responder do
         request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::PRESENT_AND_EQUAL
 
     end
+
     it "doesn't copy nonce when copy_nonce is false" do
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -261,8 +277,12 @@ describe R509::Ocsp::Responder do
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::REQUEST_ONLY
     end
-    it "returns caching headers for GET when http_cache_headers is true" do
+
+    it "returns caching headers for GET when cache_headers is true" do
         Dependo::Registry[:cache_headers] = true
+
+        now = Time.now
+        Time.stub!(:now).and_return(now)
 
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -273,15 +293,20 @@ describe R509::Ocsp::Responder do
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         last_response.headers.size.should == 6
-        last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
+        last_response.headers["Last-Modified"].should == Time.now.httpdate
         last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
-        last_response.headers["Cache-Control"].should == "max-age=604800, public, no-transform, must-revalidate"
+        max_age = ocsp_response.basic.status[0][5] - now
+        last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
     end
+
     it "returns custom max_cache_age when it's set properly" do
         Dependo::Registry[:cache_headers] = true
         Dependo::Registry[:max_cache_age] = 600
 
+        now = Time.now
+        Time.stub!(:now).and_return(now)
+
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
                 R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
@@ -291,14 +316,18 @@ describe R509::Ocsp::Responder do
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         last_response.headers.size.should == 6
-        last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
+        last_response.headers["Last-Modified"].should == now.httpdate
         last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
         last_response.headers["Cache-Control"].should == "max-age=600, public, no-transform, must-revalidate"
     end
+
     it "returns default max_cache_age if custom age is too large" do
         Dependo::Registry[:cache_headers] = true
         Dependo::Registry[:max_cache_age] = 950000
+
+        now = Time.now
+        Time.stub!(:now).and_return(now)
 
         class R509::Validity::Redis::Checker
             def check(issuer, serial)
@@ -309,12 +338,14 @@ describe R509::Ocsp::Responder do
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         last_response.headers.size.should == 6
-        last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
+        last_response.headers["Last-Modified"].should == now.httpdate
         last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
-        last_response.headers["Cache-Control"].should == "max-age=604800, public, no-transform, must-revalidate"
+        max_age = ocsp_response.basic.status[0][5] - now
+        last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
     end
-    it "returns no caching headers for GET when http_cache_headers is false" do
+
+    it "returns no caching headers for GET when cache_headers is false" do
         Dependo::Registry[:cache_headers] = false
 
         class R509::Validity::Redis::Checker
@@ -328,7 +359,8 @@ describe R509::Ocsp::Responder do
         last_response.headers.size.should == 2
         last_response.should be_ok
     end
-    it "returns no caching headers for POST when http_cache_headers is true" do
+
+    it "returns no caching headers for POST when cache_headers is true" do
         Dependo::Registry[:cache_headers] = true
 
         class R509::Validity::Redis::Checker
@@ -343,7 +375,8 @@ describe R509::Ocsp::Responder do
         last_response.headers.size.should == 2
         last_response.should be_ok
     end
-    it "returns no caching headers for POST when http_cache_headers is false" do
+
+    it "returns no caching headers for POST when cache_headers is false" do
         Dependo::Registry[:cache_headers] = false
 
         class R509::Validity::Redis::Checker

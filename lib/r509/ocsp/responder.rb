@@ -116,7 +116,7 @@ module R509::Ocsp
         def build_headers(ocsp_response)
             #cache_headers is injected via config.ru
             if cache_headers and not ocsp_response.basic.nil?
-                calculated_max_age =  ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4] - 3600
+                calculated_max_age =  ocsp_response.basic.status[0][5] - Time.now
                 #same with max_cache_age
                 if not max_cache_age or ( max_cache_age > calculated_max_age )
                     max_age = calculated_max_age
@@ -124,7 +124,7 @@ module R509::Ocsp
                     max_age = max_cache_age
                 end
 
-                response["Last-Modified"] = ocsp_response.basic.status[0][4].httpdate
+                response["Last-Modified"] = Time.now.httpdate
                 response["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
                 response["Expires"] = ocsp_response.basic.status[0][5].httpdate
                 response["Cache-Control"] = "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
