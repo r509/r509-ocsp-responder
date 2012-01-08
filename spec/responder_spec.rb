@@ -270,12 +270,11 @@ describe R509::Ocsp::Responder do
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         max_age = (ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4]) - 3600
-        last_response.headers.size.should == 7
+        last_response.headers.size.should == 6
         last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
         last_response.headers["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der)
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
         last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
-        last_response.headers["Date"].should_not be_nil
     end
     it "returns no caching headers for GET when http_cache_headers is false" do
         Dependo::Registry[:cache_headers] = false

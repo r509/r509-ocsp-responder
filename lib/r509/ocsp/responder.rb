@@ -118,10 +118,9 @@ module R509::Ocsp
             if cache_headers and not ocsp_response.basic.nil?
                 max_age = (ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4]) - 3600
                 response["Last-Modified"] = ocsp_response.basic.status[0][4].httpdate
-                response["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der)
+                response["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
                 response["Expires"] = ocsp_response.basic.status[0][5].httpdate
                 response["Cache-Control"] = "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
-                response["Date"] = Time.now.httpdate
             end
         end
 
