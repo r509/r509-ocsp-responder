@@ -272,7 +272,7 @@ describe R509::Ocsp::Responder do
         max_age = (ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4]) - 3600
         last_response.headers.size.should == 6
         last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
-        last_response.headers["ETag"] = OpenSSL::Digest::SHA1.new(ocsp_response.to_der)
+        last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
         last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
     end
