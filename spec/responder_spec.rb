@@ -18,6 +18,9 @@ describe R509::Ocsp::Responder do
         # default value for :cache_headers is false (can override on a per-test basis)
         Dependo::Registry[:cache_headers] = false
 
+        # default value for :max_cache_age is nil (can override on a per-test basis)
+        Dependo::Registry[:max_cache_age] = nil
+
         # read the config.yaml
         Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
     end
@@ -269,12 +272,47 @@ describe R509::Ocsp::Responder do
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
-        max_age = (ocsp_response.basic.status[0][5] - ocsp_response.basic.status[0][4]) - 3600
         last_response.headers.size.should == 6
         last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
         last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
-        last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
+        last_response.headers["Cache-Control"].should == "max-age=604800, public, no-transform, must-revalidate"
+    end
+    it "returns custom max_cache_age when it's set properly" do
+        Dependo::Registry[:cache_headers] = true
+        Dependo::Registry[:max_cache_age] = 600
+
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+
+        get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.headers.size.should == 6
+        last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
+        last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
+        last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
+        last_response.headers["Cache-Control"].should == "max-age=600, public, no-transform, must-revalidate"
+    end
+    it "returns default max_cache_age if custom age is too large" do
+        Dependo::Registry[:cache_headers] = true
+        Dependo::Registry[:max_cache_age] = 950000
+
+        class R509::Validity::Redis::Checker
+            def check(issuer, serial)
+                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
+            end
+        end
+
+        get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.headers.size.should == 6
+        last_response.headers["Last-Modified"].should == ocsp_response.basic.status[0][4].httpdate
+        last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
+        last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
+        last_response.headers["Cache-Control"].should == "max-age=604800, public, no-transform, must-revalidate"
     end
     it "returns no caching headers for GET when http_cache_headers is false" do
         Dependo::Registry[:cache_headers] = false

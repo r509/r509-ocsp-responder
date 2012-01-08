@@ -14,6 +14,10 @@ Dependo::Registry[:copy_nonce] = YAML.load(config_data)["copy_nonce"] || false
 
 Dependo::Registry[:cache_headers] = YAML.load(config_data)["cache_headers"] || false
 
+#if set it must not be greater than validity time - skew time or else you
+#will deliver expired responses from the cache
+Dependo::Registry[:max_cache_age] = YAML.load(config_data)["max_cache_age"]
+
 Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
     :configs => Dependo::Registry[:config_pool].all,
     :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
