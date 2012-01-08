@@ -1,7 +1,7 @@
 require 'rubygems' if RUBY_VERSION < "1.9"
 require 'sinatra/base'
 require 'r509'
-require 'r509/Validity/Redis'
+require 'r509/validity/redis'
 require 'base64'
 require 'dependo'
 require 'logger'

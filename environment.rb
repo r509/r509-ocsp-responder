@@ -1,7 +1,7 @@
 require "yaml"
 require "redis"
 require "r509"
-require "r509/Validity/Redis"
+require "r509/validity/redis"
 require "dependo"
 
 Dependo::Registry[:redis] = Redis.new

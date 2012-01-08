@@ -1,5 +1,5 @@
 require './environment'
-require './lib/r509/Ocsp/Responder'
+require './lib/r509/ocsp/responder'
 
 Dependo::Registry[:log] = Logger.new(STDOUT)
 

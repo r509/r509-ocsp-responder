@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'rspec/core/rake_task'
-require "#{File.dirname(__FILE__)}/lib/r509/Ocsp/Responder/Version"
+require "#{File.dirname(__FILE__)}/lib/r509/ocsp/responder/version"
 
 task :default => :spec
 RSpec::Core::RakeTask.new(:spec) do

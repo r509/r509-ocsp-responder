@@ -1,5 +1,5 @@
 $:.push File.expand_path("../lib", __FILE__)
-require "r509/Ocsp/Responder/Version"
+require "r509/ocsp/responder/version"
 
 spec = Gem::Specification.new do |s|
   s.name = 'r509-ocsp-responder'

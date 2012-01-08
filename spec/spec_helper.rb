@@ -9,7 +9,7 @@ require 'rubygems'
 #require 'fixtures'
 require 'rspec'
 require 'rack/test'
-require 'r509/Ocsp/Responder'
+require 'r509/ocsp/responder'
 
 RSpec.configure do |conf|
   conf.include Rack::Test::Methods
