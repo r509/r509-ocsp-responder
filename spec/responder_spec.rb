@@ -3,6 +3,11 @@ require 'time'
 
 
 describe R509::Ocsp::Responder do
+    before :all do
+        @test_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/test_ca.cer"))
+        @second_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/second_ca.cer"))
+    end
+
     before :each do
         # clear the dependo before each test
         Dependo::Registry.clear
@@ -24,6 +29,7 @@ describe R509::Ocsp::Responder do
         # read the config.yaml
         Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read(File.dirname(__FILE__)+"/fixtures/test_config.yaml"))
     end
+
     def app
         # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
         Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
@@ -32,11 +38,6 @@ describe R509::Ocsp::Responder do
             :copy_nonce => Dependo::Registry[:copy_nonce]
         )
         @app ||= R509::Ocsp::Responder
-    end
-
-    before :all do
-        @test_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/test_ca.cer"))
-        @second_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/second_ca.cer"))
     end
 
     it "should return unauthorized on a GET which does not match any configured CA" do
