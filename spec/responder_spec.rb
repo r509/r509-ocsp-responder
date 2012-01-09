@@ -6,7 +6,7 @@ describe R509::Ocsp::Responder do
     before :each do
         # clear the dependo before each test
         Dependo::Registry.clear
-        Dependo::Registry[:log] = Logger.new(nil)
+        Dependo::Registry[:log] = Logger.new(STDOUT)
 
         # we always want to mock with a new redis
         @redis = double("redis")
@@ -40,11 +40,6 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return unauthorized on a GET which does not match any configured CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                raise StandardError.new("Shouldn't ever call the Checker here, since the request isn't from the configured CA")
-            end
-        end
         get '/MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
@@ -53,11 +48,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (UNKNOWN) response on a GET request from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::UNKNOWN)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({})
+
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -69,11 +61,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (REVOKED) response on a GET request from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::REVOKED, :revocation_time => 123, :revocation_reason => 1)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::REVOKED})
+
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -85,11 +74,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (VALID) response on a GET request from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -101,11 +87,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (VALID) response on a GET request with extra leading slashes from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+
         get '/%2F%2FMFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -117,11 +100,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (VALID) response on a GET request from a second configured CA (second_ca)" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
         ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -134,11 +114,6 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return unauthorized on a POST which does not match any configured CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                raise StandardError.new("Shouldn't ever call the Checker here, since the request isn't from the configured CA")
-            end
-        end
         der = Base64.decode64(URI.decode("MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -148,11 +123,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (UNKNOWN) response on a POST request from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::UNKNOWN)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({})
+
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -165,11 +137,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (REVOKED) response on a POST request from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::REVOKED, :revocation_time => 123, :revocation_reason => 1)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::REVOKED})
+
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -182,11 +151,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (VALID) response on a POST request from the test_ca CA" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -199,11 +165,8 @@ describe R509::Ocsp::Responder do
     end
 
     it "should return a valid (VALID) response on a POST request from a second configured CA (second_ca)" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -246,11 +209,7 @@ describe R509::Ocsp::Responder do
     end
 
     it "copies nonce when copy_nonce is true" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
 
         # set to true for this test (this works because the app doesn't get set up until after this code)
         Dependo::Registry[:copy_nonce] = true
@@ -263,11 +222,7 @@ describe R509::Ocsp::Responder do
     end
 
     it "doesn't copy nonce when copy_nonce is false" do
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
 
         # set to false for this test (this works because the app doesn't get set up until after this code)
         Dependo::Registry[:copy_nonce] = false
@@ -284,11 +239,7 @@ describe R509::Ocsp::Responder do
         now = Time.now
         Time.stub!(:now).and_return(now)
 
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -307,11 +258,7 @@ describe R509::Ocsp::Responder do
         now = Time.now
         Time.stub!(:now).and_return(now)
 
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -329,11 +276,7 @@ describe R509::Ocsp::Responder do
         now = Time.now
         Time.stub!(:now).and_return(now)
 
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -348,11 +291,7 @@ describe R509::Ocsp::Responder do
     it "returns no caching headers for GET when cache_headers is false" do
         Dependo::Registry[:cache_headers] = false
 
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         last_response.content_type.should == "application/ocsp-response"
@@ -363,11 +302,8 @@ describe R509::Ocsp::Responder do
     it "returns no caching headers for POST when cache_headers is true" do
         Dependo::Registry[:cache_headers] = true
 
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -379,11 +315,8 @@ describe R509::Ocsp::Responder do
     it "returns no caching headers for POST when cache_headers is false" do
         Dependo::Registry[:cache_headers] = false
 
-        class R509::Validity::Redis::Checker
-            def check(issuer, serial)
-                R509::Validity::Status.new(:status => R509::Validity::VALID, :revocation_time => nil, :revocation_reason => 0)
-            end
-        end
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
