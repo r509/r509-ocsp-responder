@@ -10,7 +10,7 @@ require 'fixtures'
 require 'rspec'
 require 'rack/test'
 require 'r509'
-require 'r509/ocsp/responder'
+require 'r509/ocsp/responder/server'
 require 'r509/ocsp/signer'
 
 RSpec.configure do |conf|

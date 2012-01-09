@@ -2,7 +2,7 @@ require "redis"
 require "r509"
 require "r509/validity/redis"
 require "dependo"
-require './lib/r509/ocsp/responder'
+require './lib/r509/ocsp/responder/server'
 
 Dependo::Registry[:redis] = Redis.new
 
@@ -24,5 +24,5 @@ Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
 
 Dependo::Registry[:log] = Logger.new(STDOUT)
 
-responder = R509::Ocsp::Responder
+responder = R509::Ocsp::Responder::Server
 run responder

@@ -8,13 +8,13 @@ require 'dependo'
 require 'logger'
 require 'time'
 
-module R509::Ocsp
-    class Responder < Sinatra::Base
-        include Dependo::Mixin
+module R509::Ocsp::Responder
+    #error for status checking
+    class StatusError < StandardError
+    end
 
-        #error for status checking
-        class StatusError < StandardError
-        end
+    class Server < Sinatra::Base
+        include Dependo::Mixin
 
         configure do
             mime_type :ocsp, 'application/ocsp-response'

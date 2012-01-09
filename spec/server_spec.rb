@@ -2,7 +2,7 @@ require File.dirname(__FILE__) + '/spec_helper'
 require 'time'
 
 
-describe R509::Ocsp::Responder do
+describe R509::Ocsp::Responder::Server do
     before :all do
         @test_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/test_ca.cer"))
         @second_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/second_ca.cer"))
@@ -37,7 +37,7 @@ describe R509::Ocsp::Responder do
             :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
             :copy_nonce => Dependo::Registry[:copy_nonce]
         )
-        @app ||= R509::Ocsp::Responder
+        @app ||= R509::Ocsp::Responder::Server
     end
 
     it "should return unauthorized on a GET which does not match any configured CA" do
