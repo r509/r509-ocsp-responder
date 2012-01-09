@@ -22,7 +22,7 @@ describe R509::Ocsp::Responder do
         Dependo::Registry[:max_cache_age] = nil
 
         # read the config.yaml
-        Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read("config.yaml"))
+        Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read(File.dirname(__FILE__)+"/fixtures/test_config.yaml"))
     end
     def app
         # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
