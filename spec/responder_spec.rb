@@ -6,7 +6,7 @@ describe R509::Ocsp::Responder do
     before :each do
         # clear the dependo before each test
         Dependo::Registry.clear
-        Dependo::Registry[:log] = Logger.new(STDOUT)
+        Dependo::Registry[:log] = Logger.new(nil)
 
         # we always want to mock with a new redis
         @redis = double("redis")
