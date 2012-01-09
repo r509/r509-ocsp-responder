@@ -128,7 +128,6 @@ describe R509::Ocsp::Signer do
         ocsp_request.add_certid(certid)
         ocsp_handler = R509::Ocsp::Signer.new({ :configs => [@test_ca_config] })
         response = ocsp_handler.handle_request(ocsp_request)
-        File.open("/Users/pkehrer/Desktop/test.der","w") { |file| file.write(response.to_der) }
         response.verify(@test_ca_config.ca_cert.cert).should == true
         response.verify(@second_ca_config.ca_cert.cert).should == false
         response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
