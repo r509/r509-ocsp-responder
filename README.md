@@ -7,7 +7,7 @@ r509-ocsp-responder depends on r509, redis, r509-validity-redis, sinatra, and de
 
 ##Basic Usage
 
-Install the gem and set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also ccopy (and modify) the config.yaml.example file from the gem.
+Install the gem and set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also copy (and modify) the config.yaml.example file from the gem.
 
 Once you've done that you can set up your rack server. The example below is an example yaml config for thin. You will want to have as many servers as you have cores.
 
