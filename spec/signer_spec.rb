@@ -12,6 +12,8 @@ describe R509::Ocsp::Signer do
         @second_ca_config = TestFixtures.second_ca_config
         @ocsp_delegate_config = R509::Config::CaConfig.from_yaml("ocsp_delegate_ca", File.read("#{File.dirname(__FILE__)}/fixtures/config_test_various.yaml"), {:ca_root_path => "#{File.dirname(__FILE__)}/fixtures"})
         @ocsp_chain_config = R509::Config::CaConfig.from_yaml("ocsp_chain_ca", File.read("#{File.dirname(__FILE__)}/fixtures/config_test_various.yaml"), {:ca_root_path => "#{File.dirname(__FILE__)}/fixtures"})
+        Dependo::Registry.clear
+        Dependo::Registry[:log] = Logger.new(nil)
 
     end
     it "rejects ocsp requests from an unknown CA" do

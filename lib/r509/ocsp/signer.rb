@@ -1,6 +1,7 @@
 require 'openssl'
 require 'r509/exceptions'
 require 'r509/config'
+require 'dependo'
 
 # OCSP related classes (signing, response, request)
 module R509::Ocsp
@@ -50,6 +51,8 @@ end
 module R509::Ocsp::Helper
     # checks requests for validity against a set of configs
     class RequestChecker
+        include Dependo::Mixin
+
         # @param [Array<R509::Config::CaConfig>] configs
         # @param [R509::Validity::Checker] validity_checker an implementation of the R509::Validity::Checker class
         def initialize(configs, validity_checker)
@@ -84,10 +87,9 @@ module R509::Ocsp::Helper
                     ee_cert = OpenSSL::X509::Certificate.new
                     ee_cert.issuer = config.ca_cert.cert.subject
                     issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert)
-                    if certid.cmp_issuer(issuer_certid) then
-                        config
-                    end
+                    certid.cmp_issuer(issuer_certid)
                 end
+                log.info "#{validated_config.ca_cert.subject.to_s} found for issuer" if validated_config
                 check_status(certid, validated_config)
             }
         end
