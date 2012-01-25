@@ -27,13 +27,13 @@ describe R509::Ocsp::Responder::Server do
         Dependo::Registry[:max_cache_age] = nil
 
         # read the config.yaml
-        Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read(File.dirname(__FILE__)+"/fixtures/test_config.yaml"))
+        @config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read(File.dirname(__FILE__)+"/fixtures/test_config.yaml"))
     end
 
     def app
         # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
         Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
-            :configs => Dependo::Registry[:config_pool].all,
+            :configs => @config_pool.all,
             :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
             :copy_nonce => Dependo::Registry[:copy_nonce]
         )
