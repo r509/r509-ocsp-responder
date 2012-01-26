@@ -5,7 +5,6 @@ spec = Gem::Specification.new do |s|
   s.name = 'r509-ocsp-responder'
   s.version = R509::Ocsp::Responder::VERSION
   s.platform = Gem::Platform::RUBY
-  s.has_rdoc = false
   s.summary = "A (relatively) simple OCSP responder written to work with r509"
   s.description = 'An OCSP responder. What, you want more info?'
   s.add_dependency 'r509'
