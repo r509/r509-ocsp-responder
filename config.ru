@@ -24,5 +24,13 @@ Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
 
 Dependo::Registry[:log] = Logger.new(STDOUT)
 
+Dependo::Registry[:config_pool].all.each do |config|
+    Dependo::Registry[:log].info "Config: "
+    Dependo::Registry[:log].info "CA Cert:"+config.ca_cert.subject.to_s
+    Dependo::Registry[:log].info "OCSP Cert (may be the same as above):"+config.ocsp_cert.subject.to_s
+    Dependo::Registry[:log].info "OCSP Validity Hours: "+config.ocsp_validity_hours.to_s
+    Dependo::Registry[:log].info "\n"
+end
+
 responder = R509::Ocsp::Responder::Server
 run responder
