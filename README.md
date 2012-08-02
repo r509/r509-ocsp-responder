@@ -65,3 +65,8 @@ See the config.yaml.example for an example configuration. (Note: at this time th
 
 ##Running Tests
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
+
+##Future Ideas
+* Don't cache uncacheable responses (e.g., nonced request/response)
+
+* Devise a mechanism for doing automated OCSP delegate certificate renewal
