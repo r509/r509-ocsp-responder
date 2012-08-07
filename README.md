@@ -1,5 +1,5 @@
 #r509-ocsp-responder
-r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/reaperhulk/r509) and Sinatra to conform to RFC 2560 and 5019.
+r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/reaperhulk/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt).
 
 ##Requirements
 
@@ -57,7 +57,7 @@ This OCSP responder supports several optional flags (in addition to supporting a
 
 * __copy\_nonce__ - (true/false) Sets whether to copy the nonce from request to response (if present)
 
-* __cache\_headers__ - (true/false) Sets whether to set HTTP headers for caching GET responses. Coupled with a reverse proxy you can cache responses for a finite period and vastly speed up the response time of your server (at the cost of response freshness)
+* __cache\_headers__ - (true/false) Sets whether to set HTTP headers for caching GET responses. Coupled with a reverse proxy you can cache responses for a finite period and vastly speed up the response time of your server (at the cost of response freshness). Nonced requests will not be cached.
 
 * __max\_cache\_age__ - (integer) Sets the maximum age in __seconds__ a response can be cached. At this time r509-ocsp-responder does not support cache invalidation so it is recommended to set this to a low value to reduce the time you may serve stale responses in the event of a revocation.
 
@@ -67,6 +67,4 @@ See the config.yaml.example for an example configuration. (Note: at this time th
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
 
 ##Future Ideas
-* Don't cache uncacheable responses (e.g., nonced request/response)
-
 * Devise a mechanism for doing automated OCSP delegate certificate renewal

@@ -234,7 +234,7 @@ describe R509::Ocsp::Responder::Server do
         request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::REQUEST_ONLY
     end
 
-    it "returns caching headers for GET when cache_headers is true" do
+    it "returns caching headers for GET when cache_headers is true and no nonce is present" do
         Dependo::Registry[:cache_headers] = true
 
         now = Time.now
@@ -250,6 +250,45 @@ describe R509::Ocsp::Responder::Server do
         last_response.headers["Expires"].should == ocsp_response.basic.status[0][5].httpdate
         max_age = ocsp_response.basic.status[0][5] - now
         last_response.headers["Cache-Control"].should == "max-age=#{max_age.to_i}, public, no-transform, must-revalidate"
+    end
+
+    it "returns no caching headers for GET when cache_headers is false and no nonce is present" do
+        Dependo::Registry[:cache_headers] = false
+
+        now = Time.now
+        Time.stub!(:now).and_return(now)
+
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+
+        get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.headers.size.should == 2
+    end
+
+    it "returns no caching headers for GET when cache_headers is true and a nonce is present" do
+        Dependo::Registry[:cache_headers] = true
+
+        now = Time.now
+        Time.stub!(:now).and_return(now)
+
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
+
+        get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.headers.size.should == 2
+    end
+
+    it "returns no caching headers for GET when cache_headers is false and a nonce is present" do
+        Dependo::Registry[:cache_headers] = false
+
+        now = Time.now
+        Time.stub!(:now).and_return(now)
+
+        @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
+
+        get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
+        ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+        last_response.headers.size.should == 2
     end
 
     it "returns custom max_cache_age when it's set properly" do

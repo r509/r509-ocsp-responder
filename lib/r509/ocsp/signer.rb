@@ -23,25 +23,27 @@ module R509::Ocsp
 
 
         # @param request [String,OpenSSL::OCSP::Request] OCSP request (string or parsed object)
-        # @return [OpenSSL::OCSP::Request] full response object
+        # @return [Hash]
+        #   * :request [OpenSSL::OCSP::Request] parsed request object
+        #   * :response [OpenSSL::OCSP::Response] full response object
         def handle_request(request)
             begin
                 parsed_request = OpenSSL::OCSP::Request.new request
             rescue
-                return @response_signer.create_response(OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST)
+                return {:response => @response_signer.create_response(OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST), :request => nil}
             end
 
             statuses = @request_checker.check_statuses(parsed_request)
             if not @request_checker.validate_statuses(statuses)
-                return @response_signer.create_response(OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED)
+                return {:response => @response_signer.create_response(OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED), :request => nil}
             end
 
             basic_response = @response_signer.create_basic_response(parsed_request,statuses)
 
-            return @response_signer.create_response(
+            {:response => @response_signer.create_response(
                 OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL,
                 basic_response
-            )
+            ), :request => parsed_request}
         end
 
     end

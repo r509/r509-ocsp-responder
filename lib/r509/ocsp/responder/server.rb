@@ -57,17 +57,17 @@ module R509::Ocsp::Responder
             raw_request.sub!(/^\/+/,"")
             log.info "GET Request: "+raw_request
             der = Base64.decode64(raw_request)
-            ocsp_response = handle_ocsp_request(der, "GET")
-            build_headers(ocsp_response)
-            ocsp_response.to_der
+            request_response = handle_ocsp_request(der, "GET")
+            build_headers(request_response)
+            request_response[:response].to_der
         end
 
         post '/' do
             if request.media_type == 'application/ocsp-request'
                 der = request.env["rack.input"].read
                 log.info "POST Request: "+Base64.encode64(der).gsub!(/\n/,"")
-                ocsp_response = handle_ocsp_request(der, "POST")
-                ocsp_response.to_der
+                request_response = handle_ocsp_request(der, "POST")
+                request_response[:response].to_der
             end
         end
 
@@ -75,12 +75,12 @@ module R509::Ocsp::Responder
 
         def handle_ocsp_request(der, method)
             begin
-                ocsp_response = ocsp_signer.handle_request(der)
+                request_response = ocsp_signer.handle_request(der)
 
-                log_ocsp_response(ocsp_response,method)
+                log_ocsp_response(request_response[:response],method)
 
                 content_type :ocsp
-                ocsp_response
+                request_response
             rescue StandardError => e
                 log.error "unexpected error #{e}"
                 raise e
@@ -114,9 +114,13 @@ module R509::Ocsp::Responder
             end
         end
 
-        def build_headers(ocsp_response)
-            #cache_headers is injected via config.ru
-            if cache_headers and not ocsp_response.basic.nil?
+        def build_headers(request_response)
+            ocsp_response = request_response[:response]
+            ocsp_request = request_response[:request]
+
+            # cache_headers is injected via config.ru
+            # we only cache if it's a RESPONSE_STATUS_SUCCESSFUL response and there's no nonce.
+            if cache_headers and not ocsp_response.basic.nil? and ocsp_response.check_nonce(ocsp_request) == R509::Ocsp::Request::Nonce::BOTH_ABSENT
                 calculated_max_age =  ocsp_response.basic.status[0][5] - Time.now
                 #same with max_cache_age
                 if not max_cache_age or ( max_cache_age > calculated_max_age )
