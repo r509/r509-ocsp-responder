@@ -9,8 +9,10 @@ describe R509::Ocsp::Signer do
         @stca_ocsp_request = TestFixtures::STCA_OCSP_REQUEST
         @ocsp_test_cert = TestFixtures::OCSP_TEST_CERT
         @test_ca_config = TestFixtures.test_ca_config
+        @test_ca_subroot_config = TestFixtures.test_ca_subroot_config
         @second_ca_config = TestFixtures.second_ca_config
         @ocsp_delegate_config = R509::Config::CaConfig.from_yaml("ocsp_delegate_ca", File.read("#{File.dirname(__FILE__)}/fixtures/config_test_various.yaml"), {:ca_root_path => "#{File.dirname(__FILE__)}/fixtures"})
+        @ocsp_subroot_delegate_config = R509::Config::CaConfig.from_yaml("ocsp_subroot_delegate_ca", File.read("#{File.dirname(__FILE__)}/fixtures/config_test_various.yaml"), {:ca_root_path => "#{File.dirname(__FILE__)}/fixtures"})
         @ocsp_chain_config = R509::Config::CaConfig.from_yaml("ocsp_chain_ca", File.read("#{File.dirname(__FILE__)}/fixtures/config_test_various.yaml"), {:ca_root_path => "#{File.dirname(__FILE__)}/fixtures"})
         Dependo::Registry.clear
         Dependo::Registry[:log] = Logger.new(nil)
@@ -40,8 +42,30 @@ describe R509::Ocsp::Signer do
         #TODO Better way to check whether we're adding the certs when signing the basic_response than response size...
         request_response[:response].to_der.size.should == 1678
     end
-    it "responds successfully for a subroot (signing via subroot)"
-    it "responds successfully for a subroot (signing via delegate)"
+    it "responds successfully for a subroot (signing via subroot)" do
+        ocsp_handler = R509::Ocsp::Signer.new( :configs => [@test_ca_subroot_config] )
+        csr = R509::Csr.new( :subject => [['CN','ocsptest.r509.local']], :bit_strength => 1024 )
+        ca = R509::CertificateAuthority::Signer.new(@test_ca_subroot_config)
+        cert = ca.sign(:csr => csr, :profile_name => 'server')
+        ocsp_request = OpenSSL::OCSP::Request.new
+        certid = OpenSSL::OCSP::CertificateId.new(cert.cert,@test_ca_subroot_config.ca_cert.cert)
+        ocsp_request.add_certid(certid)
+        request_response = ocsp_handler.handle_request(ocsp_request)
+        request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+        request_response[:response].verify([@test_ca_subroot_config.ca_cert.cert,@test_ca_config.ca_cert.cert]).should == true
+    end
+    it "responds successfully for a subroot (signing via delegate)" do
+        ocsp_handler = R509::Ocsp::Signer.new( :configs => [@ocsp_subroot_delegate_config] )
+        csr = R509::Csr.new( :subject => [['CN','ocsptest.r509.local']], :bit_strength => 1024 )
+        ca = R509::CertificateAuthority::Signer.new(@test_ca_subroot_config)
+        cert = ca.sign(:csr => csr, :profile_name => 'server')
+        ocsp_request = OpenSSL::OCSP::Request.new
+        certid = OpenSSL::OCSP::CertificateId.new(cert.cert,@test_ca_subroot_config.ca_cert.cert)
+        ocsp_request.add_certid(certid)
+        request_response = ocsp_handler.handle_request(ocsp_request)
+        request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+        request_response[:response].verify([@test_ca_subroot_config.ca_cert.cert,@test_ca_config.ca_cert.cert]).should == true
+    end
     it "responds successfully with an OCSP chain" do
         ocsp_handler = R509::Ocsp::Signer.new( :configs => [@ocsp_chain_config] )
         csr = R509::Csr.new( :subject => [['CN','ocsptest.r509.local']], :bit_strength => 1024 )

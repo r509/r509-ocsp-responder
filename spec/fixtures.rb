@@ -24,6 +24,12 @@ module TestFixtures
     TEST_CA_OCSP_CERT = read_fixture('test_ca_ocsp.cer')
     TEST_CA_OCSP_KEY  = read_fixture('test_ca_ocsp.key')
 
+    TEST_CA_SUBROOT_CERT = read_fixture('test_ca_subroot.cer')
+    TEST_CA_SUBROOT_KEY  = read_fixture('test_ca_subroot.key')
+
+    TEST_CA_SUBROOT_OCSP_CERT = read_fixture('test_ca_subroot_ocsp.cer')
+    TEST_CA_SUBROOT_OCSP_KEY  = read_fixture('test_ca_subroot_ocsp.key')
+
     SECOND_CA_CERT = read_fixture('second_ca.cer')
     SECOND_CA_KEY  = read_fixture('second_ca.key')
 
@@ -34,6 +40,10 @@ module TestFixtures
 
     def self.test_ca_cert
         R509::Cert.new(:cert => TEST_CA_CERT, :key => TEST_CA_KEY)
+    end
+
+    def self.test_ca_subroot_cert
+        R509::Cert.new(:cert => TEST_CA_SUBROOT_CERT, :key => TEST_CA_SUBROOT_KEY)
     end
 
     def self.test_ca_server_profile
@@ -126,6 +136,32 @@ module TestFixtures
 
         opts = {
           :ca_cert => test_ca_cert(),
+          :cdp_location => 'URI:http://crl.domain.com/test_ca.crl',
+          :ocsp_location => 'URI:http://ocsp.domain.com',
+          :ocsp_start_skew_seconds => 3600,
+          :ocsp_validity_hours => 48,
+          :crl_list_file => crl_list_sio,
+          :crl_number_file => crl_number_sio
+        }
+        ret = R509::Config::CaConfig.new(opts)
+
+        ret.set_profile("server", self.test_ca_server_profile)
+        ret.set_profile("subroot", self.test_ca_subroot_profile)
+        ret.set_profile("ocspsigner", self.test_ca_ocspsigner_profile)
+        ret.set_profile("server_with_subject_item_policy", self.test_ca_server_profile_with_subject_item_policy)
+
+        ret
+    end
+
+    # @return [R509::Config::CaConfig]
+    def self.test_ca_subroot_config
+        crl_list_sio = StringIO.new
+        crl_list_sio.set_encoding("BINARY") if crl_list_sio.respond_to?(:set_encoding)
+        crl_number_sio = StringIO.new
+        crl_number_sio.set_encoding("BINARY") if crl_number_sio.respond_to?(:set_encoding)
+
+        opts = {
+          :ca_cert => test_ca_subroot_cert(),
           :cdp_location => 'URI:http://crl.domain.com/test_ca.crl',
           :ocsp_location => 'URI:http://ocsp.domain.com',
           :ocsp_start_skew_seconds => 3600,

@@ -7,6 +7,15 @@ ocsp_delegate_ca: {
         key: 'test_ca_ocsp.key'
     }
 }
+ocsp_subroot_delegate_ca: {
+    ca_cert: {
+        cert: 'test_ca_subroot.cer'
+    },
+    ocsp_cert: {
+        cert: 'test_ca_subroot_ocsp.cer',
+        key: 'test_ca_subroot_ocsp.key'
+    }
+}
 ocsp_chain_ca: {
     ca_cert: {
         cert: 'test_ca.cer'
