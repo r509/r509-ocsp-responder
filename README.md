@@ -1,4 +1,4 @@
-#r509-ocsp-responder
+#r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/reaperhulk/r509-ocsp-responder.png)](http://travis-ci.org/reaperhulk/r509-ocsp-responder)
 r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/reaperhulk/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt).
 
 ##Requirements
