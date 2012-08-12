@@ -4,8 +4,11 @@ max_cache_age: 60
 certificate_authorities: {
     test_ca: {
         ca_cert: {
-            cert: "spec/fixtures/test_ca.cer",
-            key: "spec/fixtures/test_ca.key"
+            cert: "spec/fixtures/test_ca.cer"
+        },
+        ocsp_cert: {
+            cert: "spec/fixtures/test_oca_ocsp.cer",
+            key: "spec/fixtures/test_oca_ocsp.key"
         }
     },
     second_ca: {

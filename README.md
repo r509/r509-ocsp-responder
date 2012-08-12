@@ -61,7 +61,7 @@ This OCSP responder supports several optional flags (in addition to supporting a
 
 * __max\_cache\_age__ - (integer) Sets the maximum age in __seconds__ a response can be cached. At this time r509-ocsp-responder does not support cache invalidation so it is recommended to set this to a low value to reduce the time you may serve stale responses in the event of a revocation.
 
-See the config.yaml.example for an example configuration. (Note: at this time the example config does not use ocsp_cert and ca_cert together)
+See the config.yaml.example for an example configuration.
 
 ##Running Tests
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
