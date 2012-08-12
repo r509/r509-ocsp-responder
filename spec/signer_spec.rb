@@ -40,7 +40,8 @@ describe R509::Ocsp::Signer do
         request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
         request_response[:response].verify(@ocsp_delegate_config.ca_cert.cert).should == true
         #TODO Better way to check whether we're adding the certs when signing the basic_response than response size...
-        request_response[:response].to_der.size.should == 1678
+        request_response[:response].to_der.size.should >= 1500
+        request_response[:response].to_der.size.should <= 1800
     end
     it "responds successfully for a subroot (signing via subroot)" do
         ocsp_handler = R509::Ocsp::Signer.new( :configs => [@test_ca_subroot_config] )
@@ -78,7 +79,8 @@ describe R509::Ocsp::Signer do
         request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
         request_response[:response].verify(@ocsp_chain_config.ca_cert.cert).should == true
         #TODO Better way to check whether we're adding the certs when signing the basic_response than response size...
-        request_response[:response].to_der.size.should == 3725
+        request_response[:response].to_der.size.should >= 3600
+        request_response[:response].to_der.size.should <= 3900
     end
     it "responds successfully from the test_ca" do
         csr = R509::Csr.new( :subject => [['CN','ocsptest.r509.local']], :bit_strength => 1024 )
