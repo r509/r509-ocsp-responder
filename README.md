@@ -3,11 +3,13 @@ r509-ocsp-responder is an OCSP responder written using [r509](https://github.com
 
 ##Requirements
 
-r509-ocsp-responder depends on r509, redis, r509-validity-redis, sinatra, and dependo.
+r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). These must be installed as gems.
 
 ##Basic Usage
 
-Install the gem and set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also copy (and modify) the config.yaml.example file from the gem.
+1. Build the gem. If you have cloned the repo you can build the gem with ```rake gem:build```. You will need
+2. Install the gem. ```rake gem:install```
+Build and install the gem and set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also copy (and modify) the config.yaml.example file from the gem. You'll need to alter the
 
 Once you've done that you can set up your rack server. The example below is an example yaml config for thin. You will want to have as many servers as you have cores.
 
