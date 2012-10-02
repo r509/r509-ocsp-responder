@@ -54,6 +54,8 @@ proxy_cache_valid  200 302  1m;
 
 If present, these lines will cause 200 and 302 responses to POST and GET to be cached for 1 minute. This allows you to cache POST requests in addition to the GET requests normally supported by the ruby layer. __NOTE:__ The proxy\_cache\_valid values are lower priority than caching headers sent by the thin instances so if you do not keep the value here in sync with the max\_cache\_age config (or turn off cache\_headers entirely and solely control it through nginx) you will have mismatched cache times. Additionally, this will cache nonced responses, which wastes RAM since they will not be re-used.
 
+If you would like to track the cache utilization you can also modify the nginx logging to track cache hits. There are a variety of ways this can be accomplisehd, but one of the simplest is simply to alter your log_format line to add ```$upstream_cache_status```.
+
 ##Options
 This OCSP responder supports several optional flags (in addition to supporting an arbitrary number of responder certificates).
 
