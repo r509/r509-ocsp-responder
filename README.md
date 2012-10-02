@@ -9,7 +9,7 @@ r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redi
 
 1. Build the gem. If you have cloned the repo you can build the gem with ```rake gem:build```. You will need
 2. Install the gem. ```rake gem:install```
-3. Set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also copy (and modify) the config.yaml.example file from the gem. You'll need to alter the config.ru's require line from ```require './lib/r509/ocsp/responder/server'``` to ```require 'r509/ocsp/responder/server``` if you have it installed as a gem.
+3. Set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also copy (and modify) the config.yaml.example file from the gem. You'll need to alter the config.ru's require line from ```require './lib/r509/ocsp/responder/server'``` to ```require 'r509/ocsp/responder/server'``` if you have it installed as a gem.
 
 Once you've done that you can set up your rack server. The example below is an example yaml config for thin. You will want to have as many servers as you have cores.
 
