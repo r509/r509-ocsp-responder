@@ -52,7 +52,7 @@ proxy_cache_methods GET POST;
 proxy_cache_valid  200 302  1m;
 ```
 
-If present, these lines will cause 200 and 302 responses to POST and GET to be cached for 1 minute. This allows you to cache POST requests in addition to the GET requests normally supported by the ruby layer. __NOTE:__ The proxy\_cache\_valid values are lower priority than caching headers sent by the thin instances so if you do not keep the value here in sync with the max\_cache\_age config (or turn off cache\_headers entirely and solely control it through nginx) you will have mismatched cache times. Additionally, this will cache nonced responses, which wastes RAM since they will not be re-used.
+If present, these lines will cause 200 and 302 responses to POST and GET to be cached for 1 minute. This allows you to cache POST requests (Note: Per the HTTP RFC POST requests should not be cached) in addition to the GET requests normally supported by the ruby layer. __NOTE:__ The proxy\_cache\_valid values are lower priority than caching headers sent by the thin instances so if you do not keep the value here in sync with the max\_cache\_age config (or turn off cache\_headers entirely and solely control it through nginx) you will have mismatched cache times. Additionally, this will cache nonced responses, which wastes RAM since they will not be re-used.
 
 If you would like to track the cache utilization you can also modify the nginx logging to track cache hits. There are a variety of ways this can be accomplisehd, but one of the simplest is simply to alter your log_format line to add ```$upstream_cache_status```.
 
@@ -61,7 +61,7 @@ This OCSP responder supports several optional flags (in addition to supporting a
 
 * __copy\_nonce__ - (true/false) Sets whether to copy the nonce from request to response (if present)
 
-* __cache\_headers__ - (true/false) Sets whether to set HTTP headers for caching GET responses. Coupled with a reverse proxy you can cache responses for a finite period and vastly speed up the response time of your server (at the cost of response freshness). Nonced requests will not be cached.
+* __cache\_headers__ - (true/false) Sets whether to set HTTP headers for caching GET responses. Coupled with a reverse proxy you can cache responses for a finite period and vastly speed up the response time of your server (at the cost of response freshness). Nonced requests will not be cached. The performance benefit of caching can vary drastically depending on the mix of clients connecting to the OCSP responder.
 
 * __max\_cache\_age__ - (integer) Sets the maximum age in __seconds__ a response can be cached. At this time r509-ocsp-responder does not support cache invalidation so it is recommended to set this to a low value to reduce the time you may serve stale responses in the event of a revocation.
 
