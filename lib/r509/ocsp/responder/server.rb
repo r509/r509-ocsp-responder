@@ -7,6 +7,14 @@ require 'base64'
 require 'dependo'
 require 'logger'
 require 'time'
+require File.dirname(__FILE__)+'/ocsp-config.rb'
+
+# capture HUP calls so we can reload and print the config
+Signal.trap("HUP") do
+    R509::Ocsp::Responder::OcspConfig.load_config
+    R509::Ocsp::Responder::OcspConfig.print_config
+end
+
 
 module R509::Ocsp::Responder
     #error for status checking

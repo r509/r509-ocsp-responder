@@ -364,4 +364,7 @@ describe R509::Ocsp::Responder::Server do
         last_response.headers.size.should == 2
         last_response.should be_ok
     end
+
+    it "should reload and print config when receiving a SIGHUP"
+    # TODO: find a way to test unix signal handling...
 end
