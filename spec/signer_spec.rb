@@ -18,6 +18,11 @@ describe R509::Ocsp::Signer do
         Dependo::Registry[:log] = Logger.new(nil)
 
     end
+    it "allows access to the validity checker object" do
+        ocsp_handler = R509::Ocsp::Signer.new( :configs => [@test_ca_config] )
+        ocsp_handler.validity_checker.kind_of?(R509::Validity::DefaultChecker).should == true
+    end
+
     it "rejects ocsp requests from an unknown CA" do
         ocsp_handler = R509::Ocsp::Signer.new( :configs => [@test_ca_config] )
         request_response = ocsp_handler.handle_request(@stca_ocsp_request)

@@ -54,7 +54,7 @@ module R509::Ocsp::Responder
 
         get '/status/?' do
             begin
-                redis.ping
+                Dependo::Registry[:ocsp_signer].validity_checker.is_available?
                 "OK"
             rescue
                 raise R509::Ocsp::Responder::StatusError
