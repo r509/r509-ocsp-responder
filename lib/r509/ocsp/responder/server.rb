@@ -9,8 +9,10 @@ require 'logger'
 require 'time'
 require File.dirname(__FILE__)+'/ocsp-config.rb'
 
-# capture HUP calls so we can reload and print the config
-Signal.trap("HUP") do
+# Capture USR2 calls so we can reload and print the config
+# I'd rather use HUP, but daemons like thin already capture that
+# so we can't use it.
+Signal.trap("USR2") do
     R509::Ocsp::Responder::OcspConfig.load_config
     R509::Ocsp::Responder::OcspConfig.print_config
 end

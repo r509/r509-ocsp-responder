@@ -67,6 +67,9 @@ This OCSP responder supports several optional flags (in addition to supporting a
 
 See the config.yaml.example for an example configuration.
 
+##Signals
+You can send a kill -USR2 signal to any running r509-ocsp-responder process to cause it to reload and print its config to the logs.
+
 ##Running Tests
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
 
