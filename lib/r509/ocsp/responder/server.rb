@@ -54,8 +54,11 @@ module R509::Ocsp::Responder
 
         get '/status/?' do
             begin
-                Dependo::Registry[:ocsp_signer].validity_checker.is_available?
-                "OK"
+                if Dependo::Registry[:ocsp_signer].validity_checker.is_available?
+                    "OK"
+                else
+                    raise R509::Ocsp::Responder::StatusError
+                end
             rescue
                 raise R509::Ocsp::Responder::StatusError
             end
