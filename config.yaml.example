@@ -7,8 +7,8 @@ certificate_authorities: {
             cert: "spec/fixtures/test_ca.cer"
         },
         ocsp_cert: {
-            cert: "spec/fixtures/test_oca_ocsp.cer",
-            key: "spec/fixtures/test_oca_ocsp.key"
+            cert: "spec/fixtures/test_ca_ocsp.cer",
+            key: "spec/fixtures/test_ca_ocsp.key"
         }
     },
     second_ca: {
