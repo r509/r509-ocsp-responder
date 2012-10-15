@@ -365,6 +365,10 @@ describe R509::Ocsp::Responder::Server do
         last_response.should be_ok
     end
 
-    it "should reload and print config when receiving a SIGUSR2"
-    # TODO: find a way to test unix signal handling...
+    it "should reload and print config when receiving a SIGUSR2" do
+        R509::Ocsp::Responder::OcspConfig = double("config")
+        R509::Ocsp::Responder::OcspConfig.should_receive(:load_config)
+        R509::Ocsp::Responder::OcspConfig.should_receive(:print_config)
+        Process.kill :USR2, Process.pid
+    end
 end
