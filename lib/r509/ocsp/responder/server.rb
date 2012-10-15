@@ -68,7 +68,7 @@ module R509::Ocsp::Responder
             raw_request = params[:splat].join("/")
             #remove any leading slashes (looking at you MS Crypto API)
             raw_request.sub!(/^\/+/,"")
-            log.info "GET Request: "+raw_request
+            log.info { "GET Request: "+raw_request }
             der = Base64.decode64(raw_request)
             request_response = handle_ocsp_request(der, "GET")
             build_headers(request_response)
@@ -78,7 +78,7 @@ module R509::Ocsp::Responder
         post '/' do
             if request.media_type == 'application/ocsp-request'
                 der = request.env["rack.input"].read
-                log.info "POST Request: "+Base64.encode64(der).gsub!(/\n/,"")
+                log.info { "POST Request: "+Base64.encode64(der).gsub!(/\n/,"") }
                 request_response = handle_ocsp_request(der, "POST")
                 request_response[:response].to_der
             end
@@ -119,11 +119,11 @@ module R509::Ocsp::Responder
                     end
                     status[0].serial.to_s+" Status: #{friendly_status}"
                 end
-                log.info "#{method} Request For Serial(s): #{serial_data.join(",")} UserAgent: #{env["HTTP_USER_AGENT"]}"
+                log.info { "#{method} Request For Serial(s): #{serial_data.join(",")} UserAgent: #{env["HTTP_USER_AGENT"]}" }
             when OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
-                log.info "#{method} Request For Unauthorized CA. UserAgent: #{env["HTTP_USER_AGENT"]}"
+                log.info { "#{method} Request For Unauthorized CA. UserAgent: #{env["HTTP_USER_AGENT"]}" }
             when OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
-                log.info "#{method} Malformed Request. UserAgent: #{env["HTTP_USER_AGENT"]}"
+                log.info { "#{method} Malformed Request. UserAgent: #{env["HTTP_USER_AGENT"]}" }
             end
         end
 
