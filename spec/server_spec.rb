@@ -366,9 +366,13 @@ describe R509::Ocsp::Responder::Server do
     end
 
     it "should reload and print config when receiving a SIGUSR2" do
-        R509::Ocsp::Responder::OcspConfig = double("config")
-        R509::Ocsp::Responder::OcspConfig.should_receive(:load_config)
-        R509::Ocsp::Responder::OcspConfig.should_receive(:print_config)
+        # this is far from the most elegant way to do this, but it'll work for now.
+        # it could be more elegant if we used a newer rspec or if we didn't care about 1.9.2 compat
+        $config_double = double("config")
+        R509::Ocsp::Responder::OcspConfig.stub(:load_config) { $config_double.load_config }
+        R509::Ocsp::Responder::OcspConfig.stub(:print_config) { $config_double.print_config }
+        $config_double.should_receive(:load_config)
+        $config_double.should_receive(:print_config)
         Process.kill :USR2, Process.pid
     end
 end
