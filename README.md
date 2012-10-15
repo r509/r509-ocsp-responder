@@ -3,7 +3,7 @@ r509-ocsp-responder is an OCSP responder written using [r509](https://github.com
 
 ##Requirements
 
-r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). These must be installed as gems.
+r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity), [sinatra](http://sinatrarb.com), [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats), and [dependo](https://github.com/sirsean/dependo). These must be installed as gems.
 
 ##Basic Usage
 
