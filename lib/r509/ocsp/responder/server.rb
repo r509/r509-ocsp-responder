@@ -117,7 +117,7 @@ module R509::Ocsp::Responder
                     when 2
                         "UNKNOWN"
                     end
-                    stats.record("someissuer", status[0].serial.to_s, friendly_status)
+                    stats.record("someissuer", status[0].serial.to_s, friendly_status) if Dependo::Registry.has_key?(:stats)
                     status[0].serial.to_s+" Status: #{friendly_status}"
                 end
                 log.info "#{method} Request For Serial(s): #{serial_data.join(",")} UserAgent: #{env["HTTP_USER_AGENT"]}"

@@ -13,6 +13,8 @@ Dependo::Registry[:log] = Logger.new(STDOUT)
 
 R509::Ocsp::Responder::OcspConfig.print_config
 
+# The Default stats will do nothing, and is the same as omitting this line.
+# Replace with R509::Ocsp::Stats::Redis.new to store stats to redis.
 Dependo::Registry[:stats] = R509::Ocsp::Stats::Default.new
 
 responder = R509::Ocsp::Responder::Server
