@@ -17,6 +17,10 @@ describe R509::Ocsp::Responder::Server do
         @redis = double("redis")
         Dependo::Registry[:redis] = @redis
 
+        # and we want to mock the stats recorder
+        @stats = double("stats")
+        Dependo::Registry[:stats] = @stats
+
         # default value for :copy_nonce is false (can override on a per-test basis)
         Dependo::Registry[:copy_nonce] = false
 
@@ -50,6 +54,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (UNKNOWN) response on a GET request from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "UNKNOWN")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -63,6 +68,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (REVOKED) response on a GET request from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::REVOKED})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "REVOKED")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -76,6 +82,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (VALID) response on a GET request from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -89,6 +96,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (VALID) response on a GET request with extra leading slashes from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "VALID")
 
         get '/%2F%2FMFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -102,6 +110,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (VALID) response on a GET request from a second configured CA (second_ca)" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -125,6 +134,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (UNKNOWN) response on a POST request from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "UNKNOWN")
 
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
@@ -139,6 +149,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (REVOKED) response on a POST request from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::REVOKED})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "REVOKED")
 
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
@@ -153,6 +164,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (VALID) response on a POST request from the test_ca CA" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "VALID")
 
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
@@ -167,6 +179,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "should return a valid (VALID) response on a POST request from a second configured CA (second_ca)" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
@@ -211,6 +224,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "copies nonce when copy_nonce is true" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "872625873161273451176241581705670534707360122361", "VALID")
 
         # set to true for this test (this works because the app doesn't get set up until after this code)
         Dependo::Registry[:copy_nonce] = true
@@ -224,6 +238,7 @@ describe R509::Ocsp::Responder::Server do
 
     it "doesn't copy nonce when copy_nonce is false" do
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "872625873161273451176241581705670534707360122361", "VALID")
 
         # set to false for this test (this works because the app doesn't get set up until after this code)
         Dependo::Registry[:copy_nonce] = false
@@ -241,6 +256,7 @@ describe R509::Ocsp::Responder::Server do
         Time.stub!(:now).and_return(now)
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -259,6 +275,7 @@ describe R509::Ocsp::Responder::Server do
         Time.stub!(:now).and_return(now)
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -272,6 +289,7 @@ describe R509::Ocsp::Responder::Server do
         Time.stub!(:now).and_return(now)
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "872625873161273451176241581705670534707360122361", "VALID")
 
         get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -285,6 +303,7 @@ describe R509::Ocsp::Responder::Server do
         Time.stub!(:now).and_return(now)
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:872625873161273451176241581705670534707360122361").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "872625873161273451176241581705670534707360122361", "VALID")
 
         get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -299,6 +318,7 @@ describe R509::Ocsp::Responder::Server do
         Time.stub!(:now).and_return(now)
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -317,6 +337,7 @@ describe R509::Ocsp::Responder::Server do
         Time.stub!(:now).and_return(now)
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         ocsp_response = R509::Ocsp::Response.parse(last_response.body)
@@ -332,6 +353,7 @@ describe R509::Ocsp::Responder::Server do
         Dependo::Registry[:cache_headers] = false
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "773553085290984246110251380739025914079776985795", "VALID")
 
         get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
         last_response.content_type.should == "application/ocsp-response"
@@ -343,6 +365,7 @@ describe R509::Ocsp::Responder::Server do
         Dependo::Registry[:cache_headers] = true
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "VALID")
 
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
@@ -356,6 +379,7 @@ describe R509::Ocsp::Responder::Server do
         Dependo::Registry[:cache_headers] = false
 
         @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
+        @stats.should_receive(:record).with("someissuer", "1051177536915098490149656742929223623669143613238", "VALID")
 
         der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
         post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
