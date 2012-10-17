@@ -37,7 +37,7 @@ describe R509::Ocsp::Responder::Server do
     def app
         # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
         Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
-            :configs => @config_pool.all,
+            :configs => @config_pool,
             :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
             :copy_nonce => Dependo::Registry[:copy_nonce]
         )

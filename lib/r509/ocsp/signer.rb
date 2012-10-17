@@ -10,7 +10,7 @@ module R509::Ocsp
         attr_reader :validity_checker,:request_checker
 
         # @option options [Boolean] :copy_nonce copy nonce from request to response?
-        # @option options [Array<R509::Config>] :configs array of configs corresponding to all
+        # @option options [R509::Config::CaConfigPool] :configs CaConfigPool object
         # possible OCSP issuance roots that we want to issue OCSP responses for
         def initialize(options)
             if options.has_key?(:validity_checker)
@@ -55,17 +55,28 @@ module R509::Ocsp::Helper
     # checks requests for validity against a set of configs
     class RequestChecker
         include Dependo::Mixin
-        attr_reader :configs
+        attr_reader :configs,:configs_hash
 
-        # @param [Array<R509::Config::CaConfig>] configs
+        # @param [R509::Config::CaConfigPool] configs CaConfigPool object
         # @param [R509::Validity::Checker] validity_checker an implementation of the R509::Validity::Checker class
         def initialize(configs, validity_checker)
-            @configs = configs
-            unless @configs.kind_of?(Array)
-                raise R509::R509Error, "Must pass an array of R509::Config objects"
+            unless configs.kind_of?(R509::Config::CaConfigPool)
+                raise R509::R509Error, "Must pass R509::Config::CaConfigPool object"
             end
-            if @configs.empty?
+            if configs.all.empty?
                 raise R509::R509Error, "Must be at least one R509::Config object"
+            end
+            @configs = configs.all
+            test_cid = OpenSSL::OCSP::CertificateId.new(OpenSSL::X509::Certificate.new,OpenSSL::X509::Certificate.new)
+            if test_cid.respond_to?(:issuer_key_hash)
+                puts "Supports new methods, building hash"
+                @configs_hash = {}
+                @configs.each do |config|
+                    ee_cert = OpenSSL::X509::Certificate.new
+                    ee_cert.issuer = config.ca_cert.cert.subject
+                    issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert)
+                    @configs_hash[issuer_certid.issuer_key_hash] = config
+                end
             end
             @validity_checker = validity_checker
             if @validity_checker.nil?
@@ -82,17 +93,22 @@ module R509::Ocsp::Helper
         # @return [Hash] hash from the check_status method
         def check_statuses(request)
             request.certid.map { |certid|
-                validated_config = @configs.find do |config|
-                    #we need to create an OCSP::CertificateId object that has the right
-                    #issuer so we can pass it to #cmp_issuer. This is annoying because
-                    #CertificateId wants a cert and its issuer, but we don't want to
-                    #force users to provide an end entity cert just to make this comparison
-                    #work. So, we create a fake new cert and pass it in.
-                    ee_cert = OpenSSL::X509::Certificate.new
-                    ee_cert.issuer = config.ca_cert.cert.subject
-                    issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert)
-                    certid.cmp_issuer(issuer_certid)
+                if certid.respond_to?(:issuer_key_hash)
+                    validated_config = @configs_hash[certid.issuer_key_hash]
+                else
+                    validated_config = @configs.find do |config|
+                        #we need to create an OCSP::CertificateId object that has the right
+                        #issuer so we can pass it to #cmp_issuer. This is annoying because
+                        #CertificateId wants a cert and its issuer, but we don't want to
+                        #force users to provide an end entity cert just to make this comparison
+                        #work. So, we create a fake new cert and pass it in.
+                        ee_cert = OpenSSL::X509::Certificate.new
+                        ee_cert.issuer = config.ca_cert.cert.subject
+                        issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert)
+                        certid.cmp_issuer(issuer_certid)
+                    end
                 end
+
                 log.info "#{validated_config.ca_cert.subject.to_s} found for issuer" if validated_config
                 check_status(certid, validated_config)
             }
@@ -150,21 +166,12 @@ module R509::Ocsp::Helper
     #signs OCSP responses
     class ResponseSigner
         # @option options [Boolean] :copy_nonce
-        # @option options [Array<R509::Config::CaConfig>] :configs
         def initialize(options)
             if options.has_key?(:copy_nonce)
                 @copy_nonce = options[:copy_nonce]
             else
                 @copy_nonce = false
             end
-            @configs = options[:configs]
-            unless @configs.kind_of?(Array)
-                raise R509::R509Error, "Must pass an array of R509::Config objects"
-            end
-            if @configs.empty?
-                raise R509::R509Error, "Must be at least one R509::Config object"
-            end
-            @default_config = @configs[0]
         end
 
         # It is UNWISE to call this method directly because it assumes that the request is
@@ -201,6 +208,7 @@ module R509::Ocsp::Helper
             #confusing, but R509::Cert contains R509::PrivateKey under #key. PrivateKey#key gives the OpenSSL object
             #turns out BasicResponse#sign can take up to 4 params
             #cert, key, array of OpenSSL::X509::Certificates, flags (not sure what the enumeration of those are)
+            puts config.ocsp_cert.subject.to_s
             basic_response.sign(config.ocsp_cert.cert,config.ocsp_cert.key.key,config.ocsp_chain)
         end
 
