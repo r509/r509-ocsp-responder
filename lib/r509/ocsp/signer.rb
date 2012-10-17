@@ -7,7 +7,7 @@ require 'dependo'
 module R509::Ocsp
     # A class for signing OCSP responses
     class Signer
-        attr_reader :validity_checker
+        attr_reader :validity_checker,:request_checker
 
         # @option options [Boolean] :copy_nonce copy nonce from request to response?
         # @option options [Array<R509::Config>] :configs array of configs corresponding to all
@@ -55,6 +55,7 @@ module R509::Ocsp::Helper
     # checks requests for validity against a set of configs
     class RequestChecker
         include Dependo::Mixin
+        attr_reader :configs
 
         # @param [Array<R509::Config::CaConfig>] configs
         # @param [R509::Validity::Checker] validity_checker an implementation of the R509::Validity::Checker class

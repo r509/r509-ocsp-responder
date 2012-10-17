@@ -117,7 +117,18 @@ module R509::Ocsp::Responder
                     when 2
                         "UNKNOWN"
                     end
-                    stats.record("someissuer", status[0].serial.to_s, friendly_status) if Dependo::Registry.has_key?(:stats)
+                    config_used = ocsp_signer.request_checker.configs.find do |config|
+                        #we need to create an OCSP::CertificateId object that has the right
+                        #issuer so we can pass it to #cmp_issuer. This is annoying because
+                        #CertificateId wants a cert and its issuer, but we don't want to
+                        #force users to provide an end entity cert just to make this comparison
+                        #work. So, we create a fake new cert and pass it in.
+                        ee_cert = OpenSSL::X509::Certificate.new
+                        ee_cert.issuer = config.ca_cert.cert.subject
+                        issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert)
+                        ocsp_response.basic.status[0][0].cmp_issuer(issuer_certid)
+                    end
+                    stats.record(config_used.ca_cert.subject.to_s, status[0].serial.to_s, friendly_status) if Dependo::Registry.has_key?(:stats)
                     status[0].serial.to_s+" Status: #{friendly_status}"
                 end
                 log.info { "#{method} Request For Serial(s): #{serial_data.join(",")} UserAgent: #{env["HTTP_USER_AGENT"]}" }
