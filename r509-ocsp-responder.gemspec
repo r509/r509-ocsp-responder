@@ -17,7 +17,7 @@ spec = Gem::Specification.new do |s|
   s.add_development_dependency 'syntax'
   s.add_development_dependency 'rack-test'
   s.add_development_dependency 'rcov' if RUBY_VERSION.split('.')[1].to_i == 8
-  s.add_development_dependency 'simplecov' if RUBY_VERSION.split('.')[1].to_i == 9
+  s.add_development_dependency 'simplecov' if RUBY_VERSION.split('.')[1].to_i == 9 || RUBY_VERSION.split('.')[0].to_i > 1
   s.author = "Paul Kehrer"
   s.email = "paul.l.kehrer@gmail.com"
   s.homepage = "http://langui.sh"
