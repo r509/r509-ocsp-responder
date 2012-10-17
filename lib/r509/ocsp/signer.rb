@@ -69,7 +69,6 @@ module R509::Ocsp::Helper
             @configs = configs.all
             test_cid = OpenSSL::OCSP::CertificateId.new(OpenSSL::X509::Certificate.new,OpenSSL::X509::Certificate.new)
             if test_cid.respond_to?(:issuer_key_hash)
-                puts "Supports new methods, building hash"
                 @configs_hash = {}
                 @configs.each do |config|
                     ee_cert = OpenSSL::X509::Certificate.new
@@ -208,7 +207,6 @@ module R509::Ocsp::Helper
             #confusing, but R509::Cert contains R509::PrivateKey under #key. PrivateKey#key gives the OpenSSL object
             #turns out BasicResponse#sign can take up to 4 params
             #cert, key, array of OpenSSL::X509::Certificates, flags (not sure what the enumeration of those are)
-            puts config.ocsp_cert.subject.to_s
             basic_response.sign(config.ocsp_cert.cert,config.ocsp_cert.key.key,config.ocsp_chain)
         end
 
