@@ -5,11 +5,19 @@ require "r509/ocsp/stats/default"
 require "dependo"
 require './lib/r509/ocsp/responder/server'
 
-Dependo::Registry[:redis] = Redis.new
+Dependo::Registry[:log] = Logger.new(STDOUT)
+
+begin
+    gem "hiredis"
+    Dependo::Registry[:log].warn "Loading redis with hiredis driver"
+    Dependo::Registry[:redis] = Redis.new(:driver => :hiredis)
+rescue Gem::LoadError
+    Dependo::Registry[:log].warn "Loading redis with standard ruby driver"
+    Dependo::Registry[:redis] = Redis.new
+end
+
 
 R509::Ocsp::Responder::OcspConfig.load_config
-
-Dependo::Registry[:log] = Logger.new(STDOUT)
 
 R509::Ocsp::Responder::OcspConfig.print_config
 

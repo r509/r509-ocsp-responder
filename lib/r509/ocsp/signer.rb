@@ -73,7 +73,11 @@ module R509::Ocsp::Helper
                 @configs.each do |config|
                     ee_cert = OpenSSL::X509::Certificate.new
                     ee_cert.issuer = config.ca_cert.cert.subject
-                    issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert)
+                    # per RFC 5019
+                    # Clients MUST use SHA1 as the hashing algorithm for the
+                    # CertID.issuerNameHash and the CertID.issuerKeyHash values.
+                    # so we can safely assume that our inbound hashes will be SHA1
+                    issuer_certid = OpenSSL::OCSP::CertificateId.new(ee_cert,config.ca_cert.cert,OpenSSL::Digest::SHA1.new)
                     @configs_hash[issuer_certid.issuer_key_hash] = config
                 end
             end
