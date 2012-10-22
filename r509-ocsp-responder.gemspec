@@ -7,7 +7,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "A (relatively) simple OCSP responder written to work with r509"
   s.description = 'An OCSP responder. What, you want more info?'
-  s.add_dependency 'r509', '~>0.7'
+  s.add_dependency 'r509', '~>0.8'
   s.add_dependency 'redis'
   s.add_dependency 'r509-validity-redis'
   s.add_dependency 'sinatra'
