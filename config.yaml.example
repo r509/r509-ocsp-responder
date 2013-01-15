@@ -2,19 +2,19 @@ copy_nonce: true
 cache_headers: true
 max_cache_age: 60
 certificate_authorities: {
-    test_ca: {
-        ca_cert: {
-            cert: "spec/fixtures/test_ca.cer"
-        },
-        ocsp_cert: {
-            cert: "spec/fixtures/test_ca_ocsp.cer",
-            key: "spec/fixtures/test_ca_ocsp.key"
-        }
+  test_ca: {
+    ca_cert: {
+      cert: "spec/fixtures/test_ca.cer"
     },
-    second_ca: {
-        ca_cert: {
-            cert: "spec/fixtures/second_ca.cer",
-            key: "spec/fixtures/second_ca.key"
-        }
+    ocsp_cert: {
+      cert: "spec/fixtures/test_ca_ocsp.cer",
+      key: "spec/fixtures/test_ca_ocsp.key"
     }
+  },
+  second_ca: {
+    ca_cert: {
+      cert: "spec/fixtures/second_ca.cer",
+      key: "spec/fixtures/second_ca.key"
+    }
+  }
 }

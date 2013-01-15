@@ -8,12 +8,12 @@ require './lib/r509/ocsp/responder/server'
 Dependo::Registry[:log] = Logger.new(STDOUT)
 
 begin
-    gem "hiredis"
-    Dependo::Registry[:log].warn "Loading redis with hiredis driver"
-    Dependo::Registry[:redis] = Redis.new(:driver => :hiredis)
+  gem "hiredis"
+  Dependo::Registry[:log].warn "Loading redis with hiredis driver"
+  Dependo::Registry[:redis] = Redis.new(:driver => :hiredis)
 rescue Gem::LoadError
-    Dependo::Registry[:log].warn "Loading redis with standard ruby driver"
-    Dependo::Registry[:redis] = Redis.new
+  Dependo::Registry[:log].warn "Loading redis with standard ruby driver"
+  Dependo::Registry[:redis] = Redis.new
 end
 
 

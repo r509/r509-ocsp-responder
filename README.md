@@ -30,18 +30,18 @@ proxy_cache_path  /var/www/cache levels=1:2 keys_zone=ocsp:8m max_size=16m inact
 proxy_temp_path /var/www/cache/tmp;
 
 upstream thin_ocsp_responder{
-    server unix:/var/run/r509-ocsp-responder.0.sock fail_timeout=0;
-    server unix:/var/run/r509-ocsp-responder.1.sock fail_timeout=0;
+  server unix:/var/run/r509-ocsp-responder.0.sock fail_timeout=0;
+  server unix:/var/run/r509-ocsp-responder.1.sock fail_timeout=0;
 }
 server {
-    listen       80;
-    server_name  ocsp.r509.org;
+  listen     80;
+  server_name  ocsp.r509.org;
 
-    location / {
-        proxy_pass http://thin_ocsp_responder;
-        proxy_cache ocsp;
-        proxy_cache_use_stale updating;
-    }
+  location / {
+    proxy_pass http://thin_ocsp_responder;
+    proxy_cache ocsp;
+    proxy_cache_use_stale updating;
+  }
 }
 ```
 
