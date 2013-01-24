@@ -17,7 +17,6 @@ Save the below into a config.ru (or rackup) file
 require "redis"
 require "r509"
 require "r509/validity/redis"
-#require "r509/ocsp/stats/redis"
 require "dependo"
 require 'r509/ocsp/responder/server'
 
@@ -37,7 +36,8 @@ R509::Ocsp::Responder::OcspConfig.load_config
 
 R509::Ocsp::Responder::OcspConfig.print_config
 
-# Add this line if you want to collect stats via the r509-ocsp-stats gem
+# Uncomment the next two lines if you want to collect stats via r509-ocsp-stats
+# require "r509/ocsp/stats/redis"
 # Dependo::Registry[:stats] = R509::Ocsp::Stats::Redis.new
 
 responder = R509::Ocsp::Responder::Server

@@ -206,6 +206,13 @@ describe R509::Ocsp::Responder::Server do
     last_response.body.should == "Down"
   end
 
+  it "should return 500 DOWN when querying status with redis responding incorrectly" do
+    @redis.should_receive(:ping).and_return("")
+    get '/status'
+    last_response.should_not be_ok
+    last_response.body.should == "Down"
+  end
+
   it "a malformed request should return a proper OCSP response (GET)" do
     get '/Msdfsfsdf'
     ocsp_response = R509::Ocsp::Response.parse(last_response.body)
