@@ -3,15 +3,111 @@ r509-ocsp-responder is an OCSP responder written using [r509](https://github.com
 
 ##Requirements
 
-r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity), [sinatra](http://sinatrarb.com), [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats), and [dependo](https://github.com/sirsean/dependo). These must be installed as gems.
+r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). Optionally, you can install [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats) for stats collection. These must be installed as gems.
 
 ##Basic Usage
 
-1. Build the gem. If you have cloned the repo you can build the gem with ```rake gem:build```. You will need
-2. Install the gem. ```rake gem:install```
-3. Set up your config.ru and config.yaml. At this time you'll need to copy the config.ru from the gem install to another dir with your config.yaml. You should also copy (and modify) the config.yaml.example file from the gem. You'll need to alter the config.ru's require line from ```require './lib/r509/ocsp/responder/server'``` to ```require 'r509/ocsp/responder/server'``` if you have it installed as a gem.
+###Build/Install
+If you have cloned the repo you can build the gem with ```rake gem:build``` and install with ```rake gem:install``` . Alternately you can use a prebuilt gem by typing ```gem install r509-ocsp-responder``` .
 
-Once you've done that you can set up your rack server. The example below is an example yaml config for thin. You will want to have as many servers as you have cores.
+###Set Up config.ru
+Save the below into a config.ru (or rackup) file
+
+```ruby
+require "redis"
+require "r509"
+require "r509/validity/redis"
+#require "r509/ocsp/stats/redis"
+require "dependo"
+require 'r509/ocsp/responder/server'
+
+Dependo::Registry[:log] = Logger.new(STDOUT)
+
+begin
+  gem "hiredis"
+  Dependo::Registry[:log].warn "Loading redis with hiredis driver"
+  Dependo::Registry[:redis] = Redis.new(:driver => :hiredis)
+rescue Gem::LoadError
+  Dependo::Registry[:log].warn "Loading redis with standard ruby driver"
+  Dependo::Registry[:redis] = Redis.new
+end
+
+
+R509::Ocsp::Responder::OcspConfig.load_config
+
+R509::Ocsp::Responder::OcspConfig.print_config
+
+# Add this line if you want to collect stats via the r509-ocsp-stats gem
+# Dependo::Registry[:stats] = R509::Ocsp::Stats::Redis.new
+
+responder = R509::Ocsp::Responder::Server
+run responder
+```
+
+
+###Configure config.yaml
+The config.yaml contains certificate authority nodes as well as options like copy_nonce (documented below). Each CA node has an arbitrary name like test_ca and contains a ca_cert and (optional) ocsp_cert node. If you want to sign OCSP responses directly from your root you'll set your config up like this:
+
+```yaml
+copy_nonce: true
+cache_headers: true
+max_cache_age: 60
+certificate_authorities: {
+  second_ca: {
+    ca_cert: {
+      cert: "spec/fixtures/second_ca.cer",
+      key: "spec/fixtures/second_ca.key"
+    }
+  }
+}
+```
+
+If you want to use an OCSP delegate
+
+```yaml
+copy_nonce: true
+cache_headers: true
+max_cache_age: 60
+certificate_authorities: {
+  test_ca: {
+    ca_cert: {
+      cert: "spec/fixtures/test_ca.cer"
+    },
+    ocsp_cert: {
+      cert: "spec/fixtures/test_ca_ocsp.cer",
+      key: "spec/fixtures/test_ca_ocsp.key"
+    }
+  }
+}
+```
+
+Finally, if you're responding for multiple roots you specify them like so:
+
+```yaml
+copy_nonce: true
+cache_headers: true
+max_cache_age: 60
+certificate_authorities: {
+  test_ca: {
+    ca_cert: {
+      cert: "spec/fixtures/test_ca.cer"
+    },
+    ocsp_cert: {
+      cert: "spec/fixtures/test_ca_ocsp.cer",
+      key: "spec/fixtures/test_ca_ocsp.key"
+    }
+  },
+  second_ca: {
+    ca_cert: {
+      cert: "spec/fixtures/second_ca.cer",
+      key: "spec/fixtures/second_ca.key"
+    }
+  }
+}
+```
+
+###Configure Thin & nginx
+The example below is an example yaml config for thin. You will want to have as many servers as you have cores.
 
 ```yaml
 chdir: /var/www/r509-ocsp-responder
@@ -64,8 +160,6 @@ This OCSP responder supports several optional flags (in addition to supporting a
 * __cache\_headers__ - (true/false) Sets whether to set HTTP headers for caching GET responses. Coupled with a reverse proxy you can cache responses for a finite period and vastly speed up the response time of your server (at the cost of response freshness). Nonced requests will not be cached. The performance benefit of caching can vary drastically depending on the mix of clients connecting to the OCSP responder.
 
 * __max\_cache\_age__ - (integer) Sets the maximum age in __seconds__ a response can be cached. At this time r509-ocsp-responder does not support cache invalidation so it is recommended to set this to a low value to reduce the time you may serve stale responses in the event of a revocation.
-
-See the config.yaml.example for an example configuration.
 
 ##Signals
 You can send a kill -USR2 signal to any running r509-ocsp-responder process to cause it to reload and print its config to the logs (provided your app server isn't trapping USR2 first).
