@@ -109,7 +109,6 @@ describe R509::Ocsp::Signer do
     ocsp_request.add_certid(certid)
     ocsp_handler = R509::Ocsp::Signer.new( :configs => R509::Config::CaConfigPool.new('testca_ec' => @test_ca_ec_config) )
     request_response = ocsp_handler.handle_request(ocsp_request)
-    File.open("/Users/pkehrer/Desktop/test.der",'w') {|f| f.write(request_response[:response].to_der) }
     request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     request_response[:request].should_not be_nil
   end
