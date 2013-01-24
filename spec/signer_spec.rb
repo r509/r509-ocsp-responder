@@ -9,6 +9,7 @@ describe R509::Ocsp::Signer do
     @stca_ocsp_request = TestFixtures::STCA_OCSP_REQUEST
     @ocsp_test_cert = TestFixtures::OCSP_TEST_CERT
     @test_ca_config = TestFixtures.test_ca_config
+    @test_ca_ec_config = TestFixtures.test_ca_ec_config
     @test_ca_subroot_config = TestFixtures.test_ca_subroot_config
     @second_ca_config = TestFixtures.second_ca_config
     @ocsp_delegate_config = R509::Config::CaConfig.from_yaml("ocsp_delegate_ca", File.read("#{File.dirname(__FILE__)}/fixtures/config_test_various.yaml"), {:ca_root_path => "#{File.dirname(__FILE__)}/fixtures"})
@@ -96,6 +97,19 @@ describe R509::Ocsp::Signer do
     ocsp_request.add_certid(certid)
     ocsp_handler = R509::Ocsp::Signer.new( :configs => R509::Config::CaConfigPool.new('testca' => @test_ca_config) )
     request_response = ocsp_handler.handle_request(ocsp_request)
+    request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
+    request_response[:request].should_not be_nil
+  end
+  it "responds successfully from an elliptic curve CA" do
+    csr = R509::Csr.new( :subject => [['CN','ocspectest.r509.local']], :type => :ec )
+    ca = R509::CertificateAuthority::Signer.new(@test_ca_ec_config)
+    cert = ca.sign(:csr => csr, :profile_name => 'server')
+    ocsp_request = OpenSSL::OCSP::Request.new
+    certid = OpenSSL::OCSP::CertificateId.new(cert.cert,@test_ca_ec_config.ca_cert.cert)
+    ocsp_request.add_certid(certid)
+    ocsp_handler = R509::Ocsp::Signer.new( :configs => R509::Config::CaConfigPool.new('testca_ec' => @test_ca_ec_config) )
+    request_response = ocsp_handler.handle_request(ocsp_request)
+    File.open("/Users/pkehrer/Desktop/test.der",'w') {|f| f.write(request_response[:response].to_der) }
     request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     request_response[:request].should_not be_nil
   end
