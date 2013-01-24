@@ -7,7 +7,7 @@ spec = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
   s.summary = "A (relatively) simple OCSP responder written to work with r509"
   s.description = 'A ruby OCSP responder using Sinatra and redis. RFC 2560 and 5019 compliant.'
-  s.add_dependency 'r509', '~>0.8.0'
+  s.add_dependency 'r509'
   s.add_dependency 'redis'
   s.add_dependency 'r509-validity-redis', '~>0.4.0'
   s.add_dependency 'sinatra'
