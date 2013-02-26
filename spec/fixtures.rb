@@ -55,15 +55,9 @@ module TestFixtures
 
   def self.test_ca_server_profile
     R509::Config::CaProfile.new(
-        :basic_constraints => "CA:FALSE",
+        :basic_constraints => { "ca" => false },
         :key_usage => ["digitalSignature","keyEncipherment"],
-        :extended_key_usage => ["serverAuth"],
-        :certificate_policies => [
-          [
-            "policyIdentifier=2.16.840.1.12345.1.2.3.4.1",
-            "CPS.1=http://example.com/cps"
-          ]
-        ]
+        :extended_key_usage => ["serverAuth"]
     )
 
   end
@@ -74,15 +68,9 @@ module TestFixtures
 
   def self.second_ca_server_profile
     R509::Config::CaProfile.new(
-        :basic_constraints => "CA:FALSE",
+        :basic_constraints => { "ca" => false },
         :key_usage => ["digitalSignature","keyEncipherment"],
-        :extended_key_usage => ["serverAuth"],
-        :certificate_policies => [
-          [
-            "policyIdentifier=2.16.840.1.12345.1.2.3.4.1",
-            "CPS.1=http://example.com/cps"
-          ]
-        ]
+        :extended_key_usage => ["serverAuth"]
     )
 
   end
@@ -96,8 +84,6 @@ module TestFixtures
 
     opts = {
       :ca_cert => test_ca_cert(),
-      :cdp_location => 'URI:http://crl.domain.com/test_ca.crl',
-      :ocsp_location => 'URI:http://ocsp.domain.com',
       :ocsp_start_skew_seconds => 3600,
       :ocsp_validity_hours => 48,
       :crl_list_file => crl_list_sio,
@@ -119,8 +105,6 @@ module TestFixtures
 
     opts = {
       :ca_cert => test_ca_ec_cert(),
-      :cdp_location => 'URI:http://crl.domain.com/test_ca.crl',
-      :ocsp_location => 'URI:http://ocsp.domain.com',
       :ocsp_start_skew_seconds => 3600,
       :ocsp_validity_hours => 48,
       :crl_list_file => crl_list_sio,
@@ -141,8 +125,6 @@ module TestFixtures
 
     opts = {
       :ca_cert => test_ca_subroot_cert(),
-      :cdp_location => 'URI:http://crl.domain.com/test_ca.crl',
-      :ocsp_location => 'URI:http://ocsp.domain.com',
       :ocsp_start_skew_seconds => 3600,
       :ocsp_validity_hours => 48,
       :crl_list_file => crl_list_sio,
@@ -159,8 +141,6 @@ module TestFixtures
   def self.second_ca_config
     opts = {
       :ca_cert => second_ca_cert(),
-      :cdp_location => 'URI:http://crl.domain.com/test_ca.crl',
-      :ocsp_location => 'URI:http://ocsp.domain.com'
     }
     ret = R509::Config::CaConfig.new(opts)
 
