@@ -1,5 +1,6 @@
 require File.dirname(__FILE__) + '/spec_helper'
 require 'time'
+require 'r509/validity/redis'
 
 
 describe R509::Ocsp::Responder::Server do
@@ -15,7 +16,7 @@ describe R509::Ocsp::Responder::Server do
 
     # we always want to mock with a new redis
     @redis = double("redis")
-    Dependo::Registry[:redis] = @redis
+    Dependo::Registry[:validity_checker] = R509::Validity::Redis::Checker.new @redis
 
     # and we want to mock the stats recorder
     @stats = double("stats")
@@ -38,7 +39,7 @@ describe R509::Ocsp::Responder::Server do
     # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
     Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
       :configs => @config_pool,
-      :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
+      :validity_checker => Dependo::Registry[:validity_checker],
       :copy_nonce => Dependo::Registry[:copy_nonce]
     )
     @app ||= R509::Ocsp::Responder::Server

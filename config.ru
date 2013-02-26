@@ -1,19 +1,20 @@
-require "redis"
 require "r509"
-require "r509/validity/redis"
 require "dependo"
 require 'r509/ocsp/responder/server'
 
 Dependo::Registry[:log] = Logger.new(STDOUT)
 
+require "r509/validity/redis"
+require 'redis'
 begin
   gem "hiredis"
   Dependo::Registry[:log].warn "Loading redis with hiredis driver"
-  Dependo::Registry[:redis] = Redis.new(:driver => :hiredis)
+  redis = Redis.new(:driver => :hiredis)
 rescue Gem::LoadError
   Dependo::Registry[:log].warn "Loading redis with standard ruby driver"
-  Dependo::Registry[:redis] = Redis.new
+  redis = Redis.new
 end
+Dependo::Registry[:validity_checker] = R509::Validity::Redis::Checker.new(redis)
 
 
 R509::Ocsp::Responder::OcspConfig.load_config

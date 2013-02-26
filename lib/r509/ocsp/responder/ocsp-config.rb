@@ -13,7 +13,7 @@ module R509::Ocsp::Responder
 
       Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
         :configs => Dependo::Registry[:config_pool],
-        :validity_checker => R509::Validity::Redis::Checker.new(Dependo::Registry[:redis]),
+        :validity_checker => Dependo::Registry[:validity_checker],
         :copy_nonce => Dependo::Registry[:copy_nonce]
       )
     end
