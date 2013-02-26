@@ -54,7 +54,7 @@ module TestFixtures
   end
 
   def self.test_ca_server_profile
-    R509::Config::CaProfile.new(
+    R509::Config::CAProfile.new(
         :basic_constraints => { "ca" => false },
         :key_usage => ["digitalSignature","keyEncipherment"],
         :extended_key_usage => ["serverAuth"]
@@ -67,7 +67,7 @@ module TestFixtures
   end
 
   def self.second_ca_server_profile
-    R509::Config::CaProfile.new(
+    R509::Config::CAProfile.new(
         :basic_constraints => { "ca" => false },
         :key_usage => ["digitalSignature","keyEncipherment"],
         :extended_key_usage => ["serverAuth"]
@@ -75,7 +75,7 @@ module TestFixtures
 
   end
 
-  # @return [R509::Config::CaConfig]
+  # @return [R509::Config::CAConfig]
   def self.test_ca_config
     crl_list_sio = StringIO.new
     crl_list_sio.set_encoding("BINARY") if crl_list_sio.respond_to?(:set_encoding)
@@ -89,14 +89,14 @@ module TestFixtures
       :crl_list_file => crl_list_sio,
       :crl_number_file => crl_number_sio
     }
-    ret = R509::Config::CaConfig.new(opts)
+    ret = R509::Config::CAConfig.new(opts)
 
     ret.set_profile("server", self.test_ca_server_profile)
 
     ret
   end
 
-  # @return [R509::Config::CaConfig]
+  # @return [R509::Config::CAConfig]
   def self.test_ca_ec_config
     crl_list_sio = StringIO.new
     crl_list_sio.set_encoding("BINARY") if crl_list_sio.respond_to?(:set_encoding)
@@ -110,13 +110,13 @@ module TestFixtures
       :crl_list_file => crl_list_sio,
       :crl_number_file => crl_number_sio
     }
-    ret = R509::Config::CaConfig.new(opts)
+    ret = R509::Config::CAConfig.new(opts)
 
     ret.set_profile("server", self.test_ca_server_profile)
     ret
   end
 
-  # @return [R509::Config::CaConfig]
+  # @return [R509::Config::CAConfig]
   def self.test_ca_subroot_config
     crl_list_sio = StringIO.new
     crl_list_sio.set_encoding("BINARY") if crl_list_sio.respond_to?(:set_encoding)
@@ -130,19 +130,19 @@ module TestFixtures
       :crl_list_file => crl_list_sio,
       :crl_number_file => crl_number_sio
     }
-    ret = R509::Config::CaConfig.new(opts)
+    ret = R509::Config::CAConfig.new(opts)
 
     ret.set_profile("server", self.test_ca_server_profile)
 
     ret
   end
 
-  # @return [R509::Config::CaConfig] secondary config
+  # @return [R509::Config::CAConfig] secondary config
   def self.second_ca_config
     opts = {
       :ca_cert => second_ca_cert(),
     }
-    ret = R509::Config::CaConfig.new(opts)
+    ret = R509::Config::CAConfig.new(opts)
 
     ret.set_profile("server", self.second_ca_server_profile)
 

@@ -1,9 +1,9 @@
-module R509::Ocsp::Responder
-  class OcspConfig
+module R509::OCSP::Responder
+  class OCSPConfig
     def self.load_config
       config_data = File.read("config.yaml")
 
-      Dependo::Registry[:config_pool] = R509::Config::CaConfigPool.from_yaml("certificate_authorities", config_data)
+      Dependo::Registry[:config_pool] = R509::Config::CAConfigPool.from_yaml("certificate_authorities", config_data)
 
       Dependo::Registry[:copy_nonce] = YAML.load(config_data)["copy_nonce"] || false
 
@@ -11,7 +11,7 @@ module R509::Ocsp::Responder
 
       Dependo::Registry[:max_cache_age] = YAML.load(config_data)["max_cache_age"]
 
-      Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
+      Dependo::Registry[:ocsp_signer] = R509::OCSP::Signer.new(
         :configs => Dependo::Registry[:config_pool],
         :validity_checker => Dependo::Registry[:validity_checker],
         :copy_nonce => Dependo::Registry[:copy_nonce]

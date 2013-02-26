@@ -3,7 +3,7 @@ require "r509/ocsp/responder/version"
 
 spec = Gem::Specification.new do |s|
   s.name = 'r509-ocsp-responder'
-  s.version = R509::Ocsp::Responder::VERSION
+  s.version = R509::OCSP::Responder::VERSION
   s.platform = Gem::Platform::RUBY
   s.summary = "A (relatively) simple OCSP responder written to work with r509"
   s.description = 'A ruby OCSP responder using Sinatra and redis. RFC 2560 and 5019 compliant.'

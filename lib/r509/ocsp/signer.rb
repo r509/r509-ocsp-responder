@@ -4,13 +4,13 @@ require 'r509/config'
 require 'dependo'
 
 # OCSP related classes (signing, response, request)
-module R509::Ocsp
+module R509::OCSP
   # A class for signing OCSP responses
   class Signer
     attr_reader :validity_checker,:request_checker
 
     # @option options [Boolean] :copy_nonce copy nonce from request to response?
-    # @option options [R509::Config::CaConfigPool] :configs CaConfigPool object
+    # @option options [R509::Config::CAConfigPool] :configs CAConfigPool object
     # possible OCSP issuance roots that we want to issue OCSP responses for
     def initialize(options)
       if options.has_key?(:validity_checker)
@@ -51,17 +51,17 @@ module R509::Ocsp
 end
 
 #Helper module for OCSP handling
-module R509::Ocsp::Helper
+module R509::OCSP::Helper
   # checks requests for validity against a set of configs
   class RequestChecker
     include Dependo::Mixin
     attr_reader :configs,:configs_hash
 
-    # @param [R509::Config::CaConfigPool] configs CaConfigPool object
+    # @param [R509::Config::CAConfigPool] configs CAConfigPool object
     # @param [R509::Validity::Checker] validity_checker an implementation of the R509::Validity::Checker class
     def initialize(configs, validity_checker)
-      unless configs.kind_of?(R509::Config::CaConfigPool)
-        raise R509::R509Error, "Must pass R509::Config::CaConfigPool object"
+      unless configs.kind_of?(R509::Config::CAConfigPool)
+        raise R509::R509Error, "Must pass R509::Config::CAConfigPool object"
       end
       if configs.all.empty?
         raise R509::R509Error, "Must be at least one R509::Config object"
@@ -178,10 +178,10 @@ module R509::Ocsp::Helper
     end
 
     # It is UNWISE to call this method directly because it assumes that the request is
-    # validated. You probably want to take a look at R509::Ocsp::Signer#handle_request
+    # validated. You probably want to take a look at R509::OCSP::Signer#handle_request
     #
     # @param request [OpenSSL::OCSP::Request]
-    # @param statuses [Hash] hash from R509::Ocsp::Helper::RequestChecker#check_statuses
+    # @param statuses [Hash] hash from R509::OCSP::Helper::RequestChecker#check_statuses
     # @return [OpenSSL::OCSP::BasicResponse]
     def create_basic_response(request,statuses)
       basic_response = OpenSSL::OCSP::BasicResponse.new
@@ -234,7 +234,7 @@ module R509::Ocsp::Helper
       #  unauthorized      (6)     --Request unauthorized
       #}
       #
-      R509::Ocsp::Response.new(
+      R509::OCSP::Response.new(
         OpenSSL::OCSP::Response.create(
           response_status, basic_response
         )

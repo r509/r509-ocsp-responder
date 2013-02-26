@@ -11,12 +11,12 @@ require File.dirname(__FILE__)+'/ocsp-config.rb'
 # I'd rather use HUP, but daemons like thin already capture that
 # so we can't use it.
 Signal.trap("USR2") do
-  R509::Ocsp::Responder::OcspConfig.load_config
-  R509::Ocsp::Responder::OcspConfig.print_config
+  R509::OCSP::Responder::OCSPConfig.load_config
+  R509::OCSP::Responder::OCSPConfig.print_config
 end
 
 
-module R509::Ocsp::Responder
+module R509::OCSP::Responder
   #error for status checking
   class StatusError < StandardError
   end
@@ -41,7 +41,7 @@ module R509::Ocsp::Responder
       "Invalid request"
     end
 
-    error R509::Ocsp::Responder::StatusError do
+    error R509::OCSP::Responder::StatusError do
       "Down"
     end
 
@@ -55,10 +55,10 @@ module R509::Ocsp::Responder
         if Dependo::Registry[:ocsp_signer].validity_checker.is_available?
           "OK"
         else
-          raise R509::Ocsp::Responder::StatusError
+          raise R509::OCSP::Responder::StatusError
         end
       rescue
-        raise R509::Ocsp::Responder::StatusError
+        raise R509::OCSP::Responder::StatusError
       end
     end
 
@@ -147,7 +147,7 @@ module R509::Ocsp::Responder
 
       # cache_headers is injected via config.ru
       # we only cache if it's a RESPONSE_STATUS_SUCCESSFUL response and there's no nonce.
-      if cache_headers and not ocsp_response.basic.nil? and ocsp_response.check_nonce(ocsp_request) == R509::Ocsp::Request::Nonce::BOTH_ABSENT
+      if cache_headers and not ocsp_response.basic.nil? and ocsp_response.check_nonce(ocsp_request) == R509::OCSP::Request::Nonce::BOTH_ABSENT
         calculated_max_age =  ocsp_response.basic.status[0][5] - Time.now
         #same with max_cache_age
         if not max_cache_age or ( max_cache_age > calculated_max_age )

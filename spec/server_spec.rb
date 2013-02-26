@@ -3,7 +3,7 @@ require 'time'
 require 'r509/validity/redis'
 
 
-describe R509::Ocsp::Responder::Server do
+describe R509::OCSP::Responder::Server do
   before :all do
     @test_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/test_ca.cer"))
     @second_ca_cert = OpenSSL::X509::Certificate.new(File.read(Pathname.new(__FILE__).dirname + "fixtures/second_ca.cer"))
@@ -32,22 +32,22 @@ describe R509::Ocsp::Responder::Server do
     Dependo::Registry[:max_cache_age] = nil
 
     # read the config.yaml
-    @config_pool = R509::Config::CaConfigPool.from_yaml("certificate_authorities", File.read(File.dirname(__FILE__)+"/fixtures/test_config.yaml"))
+    @config_pool = R509::Config::CAConfigPool.from_yaml("certificate_authorities", File.read(File.dirname(__FILE__)+"/fixtures/test_config.yaml"))
   end
 
   def app
     # this is executed after the code in each test, so if we change something in the dependo registry, it'll show up here (we will set :copy_nonce in some tests)
-    Dependo::Registry[:ocsp_signer] = R509::Ocsp::Signer.new(
+    Dependo::Registry[:ocsp_signer] = R509::OCSP::Signer.new(
       :configs => @config_pool,
       :validity_checker => Dependo::Registry[:validity_checker],
       :copy_nonce => Dependo::Registry[:copy_nonce]
     )
-    @app ||= R509::Ocsp::Responder::Server
+    @app ||= R509::OCSP::Responder::Server
   end
 
   it "should return unauthorized on a GET which does not match any configured CA" do
     get '/MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
     last_response.content_type.should == "application/ocsp-response"
     last_response.should be_ok
@@ -58,7 +58,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "UNKNOWN")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_UNKNOWN
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -72,7 +72,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "REVOKED")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_REVOKED
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -86,7 +86,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "VALID")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -100,7 +100,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "VALID")
 
     get '/%2F%2FMFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -114,7 +114,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA", "773553085290984246110251380739025914079776985795", "VALID")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
     ocsp_response.basic.status[0][0].serial.should == 773553085290984246110251380739025914079776985795
@@ -127,7 +127,7 @@ describe R509::Ocsp::Responder::Server do
   it "should return unauthorized on a POST which does not match any configured CA" do
     der = Base64.decode64(URI.decode("MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
     last_response.content_type.should == "application/ocsp-response"
     last_response.should be_ok
@@ -139,7 +139,7 @@ describe R509::Ocsp::Responder::Server do
 
     der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_UNKNOWN
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -154,7 +154,7 @@ describe R509::Ocsp::Responder::Server do
 
     der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_REVOKED
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -169,7 +169,7 @@ describe R509::Ocsp::Responder::Server do
 
     der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
     ocsp_response.basic.status[0][0].serial.should == 1051177536915098490149656742929223623669143613238
@@ -184,7 +184,7 @@ describe R509::Ocsp::Responder::Server do
 
     der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     ocsp_response.basic.status[0][1].should == OpenSSL::OCSP::V_CERTSTATUS_GOOD
     ocsp_response.basic.status[0][0].serial.should == 773553085290984246110251380739025914079776985795
@@ -216,7 +216,7 @@ describe R509::Ocsp::Responder::Server do
 
   it "a malformed request should return a proper OCSP response (GET)" do
     get '/Msdfsfsdf'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
     last_response.content_type.should == "application/ocsp-response"
     last_response.should be_ok
@@ -224,7 +224,7 @@ describe R509::Ocsp::Responder::Server do
 
   it "a malformed request should return a proper OCSP response (POST)" do
     post '/', 'Mdskfsdf', "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_MALFORMEDREQUEST
     last_response.content_type.should == "application/ocsp-response"
     last_response.should be_ok
@@ -239,8 +239,8 @@ describe R509::Ocsp::Responder::Server do
 
     get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
     request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
-    request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::PRESENT_AND_EQUAL
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
+    request.check_nonce(ocsp_response.basic).should == R509::OCSP::Request::Nonce::PRESENT_AND_EQUAL
 
   end
 
@@ -253,8 +253,8 @@ describe R509::Ocsp::Responder::Server do
 
     get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
     request = OpenSSL::OCSP::Request.new(Base64.decode64("MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF+aIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw="))
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
-    request.check_nonce(ocsp_response.basic).should == R509::Ocsp::Request::Nonce::REQUEST_ONLY
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
+    request.check_nonce(ocsp_response.basic).should == R509::OCSP::Request::Nonce::REQUEST_ONLY
   end
 
   it "returns caching headers for GET when cache_headers is true and no nonce is present" do
@@ -267,7 +267,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA", "773553085290984246110251380739025914079776985795", "VALID")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.headers.size.should == 6
     last_response.headers["Last-Modified"].should == Time.now.httpdate
     last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
@@ -286,7 +286,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA", "773553085290984246110251380739025914079776985795", "VALID")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.headers.size.should == 2
   end
 
@@ -300,7 +300,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "872625873161273451176241581705670534707360122361", "VALID")
 
     get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.headers.size.should == 2
   end
 
@@ -314,7 +314,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "872625873161273451176241581705670534707360122361", "VALID")
 
     get '/MHsweTBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQCY2eXAtMNzVS33fF0PHrUSjklF%2BaIjMCEwHwYJKwYBBQUHMAECBBIEEDTJniOQonxCRmmHAHCVstw%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.headers.size.should == 2
   end
 
@@ -329,7 +329,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA", "773553085290984246110251380739025914079776985795", "VALID")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.headers.size.should == 6
     last_response.headers["Last-Modified"].should == now.httpdate
     last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
@@ -348,7 +348,7 @@ describe R509::Ocsp::Responder::Server do
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA", "773553085290984246110251380739025914079776985795", "VALID")
 
     get '/MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D'
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.headers.size.should == 6
     last_response.headers["Last-Modified"].should == now.httpdate
     last_response.headers["ETag"].should == OpenSSL::Digest::SHA1.new(ocsp_response.to_der).to_s
@@ -377,7 +377,7 @@ describe R509::Ocsp::Responder::Server do
 
     der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.content_type.should == "application/ocsp-response"
     last_response.headers.size.should == 2
     last_response.should be_ok
@@ -391,7 +391,7 @@ describe R509::Ocsp::Responder::Server do
 
     der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
-    ocsp_response = R509::Ocsp::Response.parse(last_response.body)
+    ocsp_response = R509::OCSP::Response.parse(last_response.body)
     last_response.content_type.should == "application/ocsp-response"
     last_response.headers.size.should == 2
     last_response.should be_ok
@@ -399,10 +399,10 @@ describe R509::Ocsp::Responder::Server do
 
   it "should reload and print config when receiving a SIGUSR2" do
     config = double("config")
-    stub_const("R509::Ocsp::Responder::OcspConfig",config)
-    #R509::Ocsp::Responder::OcspConfig = double("config")
-    R509::Ocsp::Responder::OcspConfig.should_receive(:load_config)
-    R509::Ocsp::Responder::OcspConfig.should_receive(:print_config)
+    stub_const("R509::OCSP::Responder::OCSPConfig",config)
+    #R509::OCSP::Responder::OCSPConfig = double("config")
+    R509::OCSP::Responder::OCSPConfig.should_receive(:load_config)
+    R509::OCSP::Responder::OCSPConfig.should_receive(:print_config)
     Process.kill :USR2, Process.pid
   end
 end

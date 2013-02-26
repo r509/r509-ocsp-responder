@@ -17,13 +17,13 @@ end
 Dependo::Registry[:validity_checker] = R509::Validity::Redis::Checker.new(redis)
 
 
-R509::Ocsp::Responder::OcspConfig.load_config
+R509::OCSP::Responder::OCSPConfig.load_config
 
-R509::Ocsp::Responder::OcspConfig.print_config
+R509::OCSP::Responder::OCSPConfig.print_config
 
 # Uncomment the next two lines if you want to collect stats via r509-ocsp-stats
 # require "r509/ocsp/stats/redis"
-# Dependo::Registry[:stats] = R509::Ocsp::Stats::Redis.new
+# Dependo::Registry[:stats] = R509::OCSP::Stats::Redis.new
 
-responder = R509::Ocsp::Responder::Server
+responder = R509::OCSP::Responder::Server
 run responder
