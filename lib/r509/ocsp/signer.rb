@@ -72,7 +72,7 @@ module R509::OCSP::Helper
         @configs_hash = {}
         @configs.each do |config|
           ee_cert = OpenSSL::X509::Certificate.new
-          ee_cert.issuer = config.ca_cert.cert.subject
+          ee_cert.issuer = config.ca_cert.cert.subject.name
           # per RFC 5019
           # Clients MUST use SHA1 as the hashing algorithm for the
           # CertID.issuerNameHash and the CertID.issuerKeyHash values.
