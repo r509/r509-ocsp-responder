@@ -46,8 +46,8 @@ describe R509::OCSP::Signer do
     request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     request_response[:response].verify(@ocsp_delegate_config.ca_cert.cert).should == true
     #TODO Better way to check whether we're adding the certs when signing the basic_response than response size...
-    request_response[:response].to_der.size.should >= 1500
-    request_response[:response].to_der.size.should <= 1800
+    request_response[:response].to_der.size.should be >= 1500
+    request_response[:response].to_der.size.should be <= 1800
   end
   it "responds successfully for a subroot (signing via subroot)" do
     ocsp_handler = R509::OCSP::Signer.new( :configs => R509::Config::CAConfigPool.new('testca' => @test_ca_subroot_config) )
@@ -85,8 +85,8 @@ describe R509::OCSP::Signer do
     request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     request_response[:response].verify(@ocsp_chain_config.ca_cert.cert).should == true
     #TODO Better way to check whether we're adding the certs when signing the basic_response than response size...
-    request_response[:response].to_der.size.should >= 3600
-    request_response[:response].to_der.size.should <= 3900
+    request_response[:response].to_der.size.should be >= 3600
+    request_response[:response].to_der.size.should be <= 3900
   end
   it "responds successfully from the test_ca" do
     csr = R509::CSR.new( :subject => [['CN','ocsptest.r509.local']], :bit_strength => 1024 )
@@ -101,7 +101,7 @@ describe R509::OCSP::Signer do
     request_response[:request].should_not be_nil
   end
   it "responds successfully from an elliptic curve CA" do
-    csr = R509::CSR.new( :subject => [['CN','ocspectest.r509.local']], :type => :ec )
+    csr = R509::CSR.new( :subject => [['CN','ocspectest.r509.local']], :type => "EC" )
     ca = R509::CertificateAuthority::Signer.new(@test_ca_ec_config)
     cert = ca.sign(:csr => csr, :profile_name => 'server')
     ocsp_request = OpenSSL::OCSP::Request.new

@@ -54,12 +54,11 @@ module TestFixtures
   end
 
   def self.test_ca_server_profile
-    R509::Config::CAProfile.new(
-        :basic_constraints => { "ca" => false },
-        :key_usage => ["digitalSignature","keyEncipherment"],
-        :extended_key_usage => ["serverAuth"]
+    R509::Config::CertProfile.new(
+        :basic_constraints => { :ca => false },
+        :key_usage => { :value => ["digitalSignature","keyEncipherment"] },
+        :extended_key_usage => { :value => ["serverAuth"] }
     )
-
   end
 
   def self.second_ca_cert
@@ -67,12 +66,11 @@ module TestFixtures
   end
 
   def self.second_ca_server_profile
-    R509::Config::CAProfile.new(
-        :basic_constraints => { "ca" => false },
-        :key_usage => ["digitalSignature","keyEncipherment"],
-        :extended_key_usage => ["serverAuth"]
+    R509::Config::CertProfile.new(
+        :basic_constraints => { :ca => false },
+        :key_usage => { :value => ["digitalSignature","keyEncipherment"] },
+        :extended_key_usage => { :value => ["serverAuth"] }
     )
-
   end
 
   # @return [R509::Config::CAConfig]
