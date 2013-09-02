@@ -3,7 +3,7 @@ r509-ocsp-responder is an OCSP responder written using [r509](https://github.com
 
 ##Requirements
 
-r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). Optionally, you can install [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats) for stats collection. These must be installed as gems.
+r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity such as [r509-validity-crl](https://github.com/reaperhulk/r509-validity-crl)), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). Optionally, you can install [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats) for stats collection. These must be installed as gems.
 
 ##Basic Usage
 
@@ -11,7 +11,7 @@ r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redi
 If you have cloned the repo you can build the gem with ```rake gem:build``` and install with ```rake gem:install``` . Alternately you can use a prebuilt gem by typing ```gem install r509-ocsp-responder``` .
 
 ###Set Up config.ru
-Save the below into a config.ru (or rackup) file
+Save the below into a config.ru file
 
 ```ruby
 require "r509"
@@ -50,61 +50,51 @@ run responder
 The config.yaml contains certificate authority nodes as well as options like copy_nonce (documented below). Each CA node has an arbitrary name like test_ca and contains a ca_cert and (optional) ocsp_cert node. If you want to sign OCSP responses directly from your root you'll set your config up like this:
 
 ```yaml
+---
 copy_nonce: true
 cache_headers: true
 max_cache_age: 60
-certificate_authorities: {
-  second_ca: {
-    ca_cert: {
-      cert: "spec/fixtures/second_ca.cer",
-      key: "spec/fixtures/second_ca.key"
-    }
-  }
-}
+certificate_authorities:
+  second_ca:
+    ca_cert:
+      cert: spec/fixtures/second_ca.cer
+      key: spec/fixtures/second_ca.key
 ```
 
 If you want to use an OCSP delegate
 
 ```yaml
+---
 copy_nonce: true
 cache_headers: true
 max_cache_age: 60
-certificate_authorities: {
-  test_ca: {
-    ca_cert: {
-      cert: "spec/fixtures/test_ca.cer"
-    },
-    ocsp_cert: {
-      cert: "spec/fixtures/test_ca_ocsp.cer",
-      key: "spec/fixtures/test_ca_ocsp.key"
-    }
-  }
-}
+certificate_authorities:
+  test_ca:
+    ca_cert:
+      cert: spec/fixtures/test_ca.cer
+    ocsp_cert:
+      cert: spec/fixtures/test_ca_ocsp.cer
+      key: spec/fixtures/test_ca_ocsp.key
 ```
 
 Finally, if you're responding for multiple roots you specify them like so:
 
 ```yaml
+---
 copy_nonce: true
 cache_headers: true
 max_cache_age: 60
-certificate_authorities: {
-  test_ca: {
-    ca_cert: {
-      cert: "spec/fixtures/test_ca.cer"
-    },
-    ocsp_cert: {
-      cert: "spec/fixtures/test_ca_ocsp.cer",
-      key: "spec/fixtures/test_ca_ocsp.key"
-    }
-  },
-  second_ca: {
-    ca_cert: {
-      cert: "spec/fixtures/second_ca.cer",
-      key: "spec/fixtures/second_ca.key"
-    }
-  }
-}
+certificate_authorities:
+  test_ca:
+    ca_cert:
+      cert: spec/fixtures/test_ca.cer
+    ocsp_cert:
+      cert: spec/fixtures/test_ca_ocsp.cer
+      key: spec/fixtures/test_ca_ocsp.key
+  second_ca:
+    ca_cert:
+      cert: spec/fixtures/second_ca.cer
+      key: spec/fixtures/second_ca.key
 ```
 
 ###Configure Thin & nginx
@@ -167,6 +157,3 @@ You can send a kill -USR2 signal to any running r509-ocsp-responder process to c
 
 ##Running Tests
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
-
-##Future Ideas
-* Devise a mechanism for doing automated OCSP delegate certificate renewal
