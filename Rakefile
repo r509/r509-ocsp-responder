@@ -7,12 +7,6 @@ RSpec::Core::RakeTask.new(:spec) do
     ENV['RACK_ENV'] = 'test'
 end
 
-desc 'Run all rspec tests with rcov (1.8 only)'
-RSpec::Core::RakeTask.new(:rcov) do |t|
-    t.rcov_opts =  %q[--exclude "spec,gems"]
-    t.rcov = true
-end
-
 namespace :gem do
     desc 'Build the gem'
     task :build do
