@@ -155,5 +155,8 @@ This OCSP responder supports several optional flags (in addition to supporting a
 ##Signals
 You can send a kill -USR2 signal to any running r509-ocsp-responder process to cause it to reload and print its config to the logs (provided your app server isn't trapping USR2 first).
 
+##Support
+You can file bugs on GitHub or join the #r509 channel on irc.freenode.net to ask questions.
+
 ##Running Tests
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
