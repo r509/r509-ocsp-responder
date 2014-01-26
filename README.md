@@ -1,4 +1,4 @@
-#r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/r509/r509-ocsp-responder.png)](http://travis-ci.org/r509/r509-ocsp-responder)
+#r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/r509/r509-ocsp-responder.png)](http://travis-ci.org/r509/r509-ocsp-responder) [![Coverage Status](https://coveralls.io/repos/r509/r509-ocsp-responder/badge.png)](https://coveralls.io/r/r509/r509-ocsp-responder)
 r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/r509/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt).
 
 ##Requirements
