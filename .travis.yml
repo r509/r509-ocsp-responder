@@ -2,8 +2,17 @@ language: ruby
 rvm:
  - 1.9.3
  - 2.0.0
+ - 2.1.0
  - ruby-head
- - rbx-19mode
+ - rbx
 matrix:
   allow_failures:
     - rvm: ruby-head
+notifications:
+  irc:
+    channels:
+      - "irc.freenode.org#r509"
+    use_notice: true
+    skip_join: true
+    on_success: always
+    on_failure: always
