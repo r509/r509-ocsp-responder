@@ -1,9 +1,9 @@
-#r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/reaperhulk/r509-ocsp-responder.png)](http://travis-ci.org/reaperhulk/r509-ocsp-responder)
-r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/reaperhulk/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt).
+#r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/r509/r509-ocsp-responder.png)](http://travis-ci.org/r509/r509-ocsp-responder)
+r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/r509/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt).
 
 ##Requirements
 
-r509-ocsp-responder depends on [r509](https://github.com/reaperhulk/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity such as [r509-validity-crl](https://github.com/reaperhulk/r509-validity-crl)), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). Optionally, you can install [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats) for stats collection. These must be installed as gems.
+r509-ocsp-responder depends on [r509](https://github.com/r509/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity such as [r509-validity-crl](https://github.com/r509/r509-validity-crl)), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). Optionally, you can install [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats) for stats collection. These must be installed as gems.
 
 ##Basic Usage
 
