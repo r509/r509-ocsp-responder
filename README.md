@@ -3,7 +3,7 @@ r509-ocsp-responder is an OCSP responder written using [r509](https://github.com
 
 ##Requirements
 
-r509-ocsp-responder depends on [r509](https://github.com/r509/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity such as [r509-validity-crl](https://github.com/r509/r509-validity-crl)), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). Optionally, you can install [r509-ocsp-stats](https://github.com/sirsean/r509-ocsp-stats) for stats collection. These must be installed as gems.
+r509-ocsp-responder depends on [r509](https://github.com/r509/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity such as [r509-validity-crl](https://github.com/r509/r509-validity-crl)), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). These must be installed as gems.
 
 ##Basic Usage
 
@@ -36,10 +36,6 @@ Dependo::Registry[:validity_checker] = R509::Validity::Redis::Checker.new(redis)
 R509::OCSP::Responder::OCSPConfig.load_config
 
 R509::OCSP::Responder::OCSPConfig.print_config
-
-# Uncomment the next two lines if you want to collect stats via r509-ocsp-stats
-# require "r509/ocsp/stats/redis"
-# Dependo::Registry[:stats] = R509::OCSP::Stats::Redis.new
 
 responder = R509::OCSP::Responder::Server
 run responder
