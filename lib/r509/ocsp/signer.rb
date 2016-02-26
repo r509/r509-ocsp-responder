@@ -196,7 +196,7 @@ module R509::OCSP::Helper
         end
         basic_response.add_status(status[:certid],
                     status[:status],
-                    status[:revocation_reason],
+                    status[:revocation_reason].to_i,
                     revocation_time,
                     -1*status[:config].ocsp_start_skew_seconds,
                     status[:config].ocsp_validity_hours*3600,
