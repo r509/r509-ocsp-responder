@@ -8,6 +8,7 @@ platforms :rbx do
     gem "rubinius-coverage"
 end
 gem "r509"
+gem "openssl"
 gem "r509-validity-redis"
 gem "dependo"
 gemspec

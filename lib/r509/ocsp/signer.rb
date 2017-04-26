@@ -72,7 +72,7 @@ module R509::OCSP::Helper
         @configs_hash = {}
         @configs.each do |config|
           ee_cert = OpenSSL::X509::Certificate.new
-          ee_cert.issuer = config.ca_cert.cert.subject.name
+          ee_cert.issuer = config.ca_cert.cert.subject
           # per RFC 5019
           # Clients MUST use SHA1 as the hashing algorithm for the
           # CertID.issuerNameHash and the CertID.issuerKeyHash values.
@@ -211,7 +211,8 @@ module R509::OCSP::Helper
       #confusing, but R509::Cert contains R509::PrivateKey under #key. PrivateKey#key gives the OpenSSL object
       #turns out BasicResponse#sign can take up to 4 params
       #cert, key, array of OpenSSL::X509::Certificates, flags (not sure what the enumeration of those are)
-      basic_response.sign(config.ocsp_cert.cert,config.ocsp_cert.key.key,config.ocsp_chain)
+      signature_algorithm = "SHA256"
+      basic_response.sign(config.ocsp_cert.cert, config.ocsp_cert.key.key, config.ocsp_chain, 0, signature_algorithm)
     end
 
     # Builds final response.
