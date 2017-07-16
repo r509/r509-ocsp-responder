@@ -52,9 +52,29 @@ end
 
 #Helper module for OCSP handling
 module R509::OCSP::Helper
+  module Compatibility
+    if RUBY_VERSION < "2.4"
+       def ruby_24
+         false
+       end
+       
+       def ruby_23
+         yield
+       end
+     else 
+       def ruby_24
+         yield
+       end
+       
+       def ruby_23
+         false
+       end
+     end
+  end
   # checks requests for validity against a set of configs
   class RequestChecker
     include Dependo::Mixin
+    include Compatibility
     attr_reader :configs,:configs_hash
 
     # @param [R509::Config::CAConfigPool] configs CAConfigPool object
@@ -72,7 +92,8 @@ module R509::OCSP::Helper
         @configs_hash = {}
         @configs.each do |config|
           ee_cert = OpenSSL::X509::Certificate.new
-          ee_cert.issuer = config.ca_cert.cert.subject
+          ruby_23 { ee_cert.issuer = config.ca_cert.cert.subject.name } ||
+          ruby_24 { ee_cert.issuer = config.ca_cert.cert.subject }
           # per RFC 5019
           # Clients MUST use SHA1 as the hashing algorithm for the
           # CertID.issuerNameHash and the CertID.issuerKeyHash values.
@@ -168,6 +189,7 @@ module R509::OCSP::Helper
 
   #signs OCSP responses
   class ResponseSigner
+    include Compatibility
     # @option options [Boolean] :copy_nonce
     def initialize(options)
       if options.has_key?(:copy_nonce)
@@ -211,8 +233,13 @@ module R509::OCSP::Helper
       #confusing, but R509::Cert contains R509::PrivateKey under #key. PrivateKey#key gives the OpenSSL object
       #turns out BasicResponse#sign can take up to 4 params
       #cert, key, array of OpenSSL::X509::Certificates, flags (not sure what the enumeration of those are)
-      signature_algorithm = "SHA256"
-      basic_response.sign(config.ocsp_cert.cert, config.ocsp_cert.key.key, config.ocsp_chain, 0, signature_algorithm)
+      ruby_24 do
+        signature_algorithm = "SHA256"
+        basic_response.sign(config.ocsp_cert.cert, config.ocsp_cert.key.key, config.ocsp_chain, 0, signature_algorithm)
+      end || 
+      ruby_23 do
+        basic_response.sign(config.ocsp_cert.cert,config.ocsp_cert.key.key,config.ocsp_chain) 
+      end
     end
 
     # Builds final response.
