@@ -16,7 +16,7 @@ namespace :gem do
 
     desc 'Install gem'
     task :install do
-        puts `gem install r509-ocsp-responder-#{R509::Ocsp::Responder::VERSION}.gem`
+        puts `gem install r509-ocsp-responder-#{R509::OCSP::Responder::VERSION}.gem`
     end
 
     desc 'Uninstall gem'
