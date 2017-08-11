@@ -1,16 +1,19 @@
-#r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/r509/r509-ocsp-responder.png)](http://travis-ci.org/r509/r509-ocsp-responder) [![Coverage Status](https://coveralls.io/repos/r509/r509-ocsp-responder/badge.png)](https://coveralls.io/r/r509/r509-ocsp-responder)
-r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/r509/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt).
+# r509-ocsp-responder [![Build Status](https://secure.travis-ci.org/r509/r509-ocsp-responder.png)](http://travis-ci.org/r509/r509-ocsp-responder) [![Coverage Status](https://coveralls.io/repos/r509/r509-ocsp-responder/badge.png)](https://coveralls.io/r/r509/r509-ocsp-responder)
 
-##Requirements
+r509-ocsp-responder is an OCSP responder written using [r509](https://github.com/r509/r509) and Sinatra to conform to RFC [2560](http://www.ietf.org/rfc/rfc2560.txt) and [5019](http://www.ietf.org/rfc/rfc5019.txt). It supports Ruby 2.3+.
+
+## Requirements
 
 r509-ocsp-responder depends on [r509](https://github.com/r509/r509), [redis](http://redis.io), [r509-validity-redis](https://github.com/sirsean/r509-validity-redis) (or another library that implements R509::Validity such as [r509-validity-crl](https://github.com/r509/r509-validity-crl)), [sinatra](http://sinatrarb.com), and [dependo](https://github.com/sirsean/dependo). These must be installed as gems.
 
-##Basic Usage
+## Basic Usage
 
-###Build/Install
+### Build/Install
+
 If you have cloned the repo you can build the gem with ```rake gem:build``` and install with ```rake gem:install``` . Alternately you can use a prebuilt gem by typing ```gem install r509-ocsp-responder``` .
 
-###Set Up config.ru
+### Set Up config.ru
+
 Save the below into a config.ru file
 
 ```ruby
@@ -42,7 +45,8 @@ run responder
 ```
 
 
-###Configure config.yaml
+### Configure config.yaml
+
 The config.yaml contains certificate authority nodes as well as options like copy_nonce (documented below). Each CA node has an arbitrary name like test_ca and contains a ca_cert and (optional) ocsp_cert node. If you want to sign OCSP responses directly from your root you'll set your config up like this:
 
 ```yaml
@@ -93,7 +97,7 @@ certificate_authorities:
       key: spec/fixtures/second_ca.key
 ```
 
-###Configure Thin & nginx
+### Configure Thin & nginx
 The example below is an example yaml config for thin. You will want to have as many servers as you have cores.
 
 ```yaml
@@ -139,7 +143,7 @@ If present, these lines will cause 200 and 302 responses to POST and GET to be c
 
 If you would like to track the cache utilization you can also modify the nginx logging to track cache hits. There are a variety of ways this can be accomplisehd, but one of the simplest is simply to alter your log_format line to add ```$upstream_cache_status```.
 
-##Options
+## Options
 This OCSP responder supports several optional flags (in addition to supporting an arbitrary number of responder certificates).
 
 * __copy\_nonce__ - (true/false) Sets whether to copy the nonce from request to response (if present)
@@ -148,11 +152,11 @@ This OCSP responder supports several optional flags (in addition to supporting a
 
 * __max\_cache\_age__ - (integer) Sets the maximum age in __seconds__ a response can be cached. At this time r509-ocsp-responder does not support cache invalidation so it is recommended to set this to a low value to reduce the time you may serve stale responses in the event of a revocation.
 
-##Signals
+## Signals
 You can send a kill -USR2 signal to any running r509-ocsp-responder process to cause it to reload and print its config to the logs (provided your app server isn't trapping USR2 first).
 
-##Support
+## Support
 You can file bugs on GitHub or join the #r509 channel on irc.freenode.net to ask questions.
 
-##Running Tests
+## Running Tests
 You'll need rspec, rake, and rack-test to run the tests. With these gems in place run ```rake spec```
