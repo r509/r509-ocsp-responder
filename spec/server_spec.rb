@@ -125,7 +125,7 @@ describe R509::OCSP::Responder::Server do
   end
 
   it "should return unauthorized on a POST which does not match any configured CA" do
-    der = Base64.decode64(URI.decode("MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFEwTzBNMEswSTAJBgUrDgMCGgUABBQ1mI4Ww4R5LZiQ295pj4OF%2F44yyAQUyk7dWyc1Kdn27sPlU%2B%2BkwBmWHa8CEFqb7H4xpqYH6ed2G0%2BPMG4%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_UNAUTHORIZED
@@ -137,7 +137,7 @@ describe R509::OCSP::Responder::Server do
     @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({})
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "UNKNOWN")
 
-    der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -152,7 +152,7 @@ describe R509::OCSP::Responder::Server do
     @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::REVOKED})
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "REVOKED")
 
-    der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -167,7 +167,7 @@ describe R509::OCSP::Responder::Server do
     @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "VALID")
 
-    der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -182,7 +182,7 @@ describe R509::OCSP::Responder::Server do
     @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA:773553085290984246110251380739025914079776985795").and_return({"status" => R509::Validity::VALID})
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=R509, Ltd/CN=R509 Secondary Test CA", "773553085290984246110251380739025914079776985795", "VALID")
 
-    der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBT1kOLWHXbHiKP3sVPVxVziq%2FMqIwQUP8ezIf8yhMLgHnccSKJLQdhDaVkCFQCHf1HsjUAACwcp3qQL4IxclfXSww%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     ocsp_response = R509::OCSP::Response.parse(last_response.body)
     ocsp_response.status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
@@ -375,7 +375,7 @@ describe R509::OCSP::Responder::Server do
     @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "VALID")
 
-    der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     R509::OCSP::Response.parse(last_response.body)
     last_response.content_type.should == "application/ocsp-response"
@@ -389,7 +389,7 @@ describe R509::OCSP::Responder::Server do
     @redis.should_receive(:hgetall).with("cert:/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA:1051177536915098490149656742929223623669143613238").and_return({"status" => R509::Validity::VALID})
     @stats.should_receive(:record).with("/C=US/ST=Illinois/L=Chicago/O=Ruby CA Project/CN=Test CA", "1051177536915098490149656742929223623669143613238", "VALID")
 
-    der = Base64.decode64(URI.decode("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
+    der = Base64.decode64(URI::DEFAULT_PARSER.unescape("MFYwVDBSMFAwTjAJBgUrDgMCGgUABBQ4ykaMB0SN9IGWx21tTHBRnmCnvQQUeXW7hDrLLN56Cb4xG0O8HCpNU1gCFQC4IG5U4zC4RYb4VQ%2B2f0zCoFCvNg%3D%3D"))
     post '/', der, "CONTENT_TYPE" => "application/ocsp-request"
     R509::OCSP::Response.parse(last_response.body)
     last_response.content_type.should == "application/ocsp-response"
