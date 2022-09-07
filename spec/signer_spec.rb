@@ -85,7 +85,7 @@ describe R509::OCSP::Signer do
     request_response[:response].status.should == OpenSSL::OCSP::RESPONSE_STATUS_SUCCESSFUL
     request_response[:response].verify(@ocsp_chain_config.ca_cert.cert).should == true
     #TODO Better way to check whether we're adding the certs when signing the basic_response than response size...
-    request_response[:response].to_der.size.should be >= 3600
+    request_response[:response].to_der.size.should be >= 3500
     request_response[:response].to_der.size.should be <= 3900
   end
   it "responds successfully from the test_ca" do
